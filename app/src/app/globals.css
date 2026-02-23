@@ -1,26 +1,388 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #1e293b;
+
+  /* Bottleneck - Amber tones */
+  --bottleneck-50: #fffbeb;
+  --bottleneck-100: #fef3c7;
+  --bottleneck-200: #fde68a;
+  --bottleneck-300: #fcd34d;
+  --bottleneck-400: #fbbf24;
+  --bottleneck-500: #f59e0b;
+  --bottleneck-600: #d97706;
+  --bottleneck-700: #b45309;
+  --bottleneck-800: #92400e;
+  --bottleneck-900: #78350f;
+  --bottleneck-accent: #f59e0b;
+  --bottleneck-bg: #fffbeb;
+  --bottleneck-border: #fde68a;
+  --bottleneck-text: #92400e;
+
+  /* Leverage - Emerald tones */
+  --leverage-50: #ecfdf5;
+  --leverage-100: #d1fae5;
+  --leverage-200: #a7f3d0;
+  --leverage-300: #6ee7b7;
+  --leverage-400: #34d399;
+  --leverage-500: #10b981;
+  --leverage-600: #059669;
+  --leverage-700: #047857;
+  --leverage-800: #065f46;
+  --leverage-900: #064e3b;
+  --leverage-accent: #10b981;
+  --leverage-bg: #ecfdf5;
+  --leverage-border: #a7f3d0;
+  --leverage-text: #065f46;
+
+  /* Strategic - Blue tones */
+  --strategic-50: #eff6ff;
+  --strategic-100: #dbeafe;
+  --strategic-200: #bfdbfe;
+  --strategic-300: #93c5fd;
+  --strategic-400: #60a5fa;
+  --strategic-500: #3b82f6;
+  --strategic-600: #2563eb;
+  --strategic-700: #1d4ed8;
+  --strategic-800: #1e40af;
+  --strategic-900: #1e3a8a;
+  --strategic-accent: #3b82f6;
+  --strategic-bg: #eff6ff;
+  --strategic-border: #bfdbfe;
+  --strategic-text: #1e40af;
+
+  /* Non-critical - Slate tones */
+  --noncritical-50: #f8fafc;
+  --noncritical-100: #f1f5f9;
+  --noncritical-200: #e2e8f0;
+  --noncritical-300: #cbd5e1;
+  --noncritical-400: #94a3b8;
+  --noncritical-500: #64748b;
+  --noncritical-600: #475569;
+  --noncritical-700: #334155;
+  --noncritical-800: #1e293b;
+  --noncritical-900: #0f172a;
+  --noncritical-accent: #64748b;
+  --noncritical-bg: #f8fafc;
+  --noncritical-border: #e2e8f0;
+  --noncritical-text: #334155;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Bottleneck theme colors */
+  --color-bottleneck-50: var(--bottleneck-50);
+  --color-bottleneck-100: var(--bottleneck-100);
+  --color-bottleneck-200: var(--bottleneck-200);
+  --color-bottleneck-300: var(--bottleneck-300);
+  --color-bottleneck-400: var(--bottleneck-400);
+  --color-bottleneck-500: var(--bottleneck-500);
+  --color-bottleneck-600: var(--bottleneck-600);
+  --color-bottleneck-700: var(--bottleneck-700);
+  --color-bottleneck-800: var(--bottleneck-800);
+  --color-bottleneck-900: var(--bottleneck-900);
+
+  /* Leverage theme colors */
+  --color-leverage-50: var(--leverage-50);
+  --color-leverage-100: var(--leverage-100);
+  --color-leverage-200: var(--leverage-200);
+  --color-leverage-300: var(--leverage-300);
+  --color-leverage-400: var(--leverage-400);
+  --color-leverage-500: var(--leverage-500);
+  --color-leverage-600: var(--leverage-600);
+  --color-leverage-700: var(--leverage-700);
+  --color-leverage-800: var(--leverage-800);
+  --color-leverage-900: var(--leverage-900);
+
+  /* Strategic theme colors */
+  --color-strategic-50: var(--strategic-50);
+  --color-strategic-100: var(--strategic-100);
+  --color-strategic-200: var(--strategic-200);
+  --color-strategic-300: var(--strategic-300);
+  --color-strategic-400: var(--strategic-400);
+  --color-strategic-500: var(--strategic-500);
+  --color-strategic-600: var(--strategic-600);
+  --color-strategic-700: var(--strategic-700);
+  --color-strategic-800: var(--strategic-800);
+  --color-strategic-900: var(--strategic-900);
+
+  /* Non-critical theme colors */
+  --color-noncritical-50: var(--noncritical-50);
+  --color-noncritical-100: var(--noncritical-100);
+  --color-noncritical-200: var(--noncritical-200);
+  --color-noncritical-300: var(--noncritical-300);
+  --color-noncritical-400: var(--noncritical-400);
+  --color-noncritical-500: var(--noncritical-500);
+  --color-noncritical-600: var(--noncritical-600);
+  --color-noncritical-700: var(--noncritical-700);
+  --color-noncritical-800: var(--noncritical-800);
+  --color-noncritical-900: var(--noncritical-900);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Feedback panel slide-in animation */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.4s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+/* Progress bar animation */
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+}
+
+.animate-progress-fill {
+  animation: progressFill 0.6s ease-out forwards;
+}
+
+/* Scrollbar styling for a clean professional look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================================================
+   Print-Friendly Styles for Dashboard
+   ============================================================ */
+
+@media print {
+  /* Page setup for A4 */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 12mm;
+  }
+
+  /* Reset backgrounds and shadows */
+  body {
+    background: white !important;
+    color: #1a1a1a !important;
+    font-size: 11pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide navigation, buttons, and non-essential interactive elements */
+  header,
+  nav,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print\\:block {
+    display: block !important;
+  }
+
+  /* Remove shadows and adjust borders for print */
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+
+  /* Ensure colored elements render in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure SVG charts render properly */
+  svg {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Recharts responsive container adjustments */
+  .recharts-responsive-container {
+    min-height: 200px !important;
+  }
+
+  .recharts-wrapper {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent orphaned headers */
+  h1, h2, h3, h4, h5, h6 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Prevent breaking inside cards */
+  .rounded-xl,
+  .rounded-2xl {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Page break control */
+  .print\\:break-before-page {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .print\\:break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Compact spacing for print */
+  .print\\:mb-6 {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .print\\:py-4 {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+
+  .print\\:px-2 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  .print\\:p-4 {
+    padding: 1rem !important;
+  }
+
+  .print\\:gap-3 {
+    gap: 0.75rem !important;
+  }
+
+  /* Print border overrides */
+  .print\\:border {
+    border-width: 1px !important;
+    border-style: solid !important;
+  }
+
+  .print\\:border-gray-200 {
+    border-color: #e5e7eb !important;
+  }
+
+  .print\\:border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+
+  .print\\:border-blue-200 {
+    border-color: #bfdbfe !important;
+  }
+
+  /* Print shadow override */
+  .print\\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  /* Expand learning feedback panels in print */
+  .print\\:max-h-none {
+    max-height: none !important;
+  }
+
+  .print\\:opacity-100 {
+    opacity: 1 !important;
+  }
+
+  /* Chart height adjustments for print */
+  .print\\:h-\\[300px\\] {
+    height: 300px !important;
+  }
+
+  .print\\:h-\\[180px\\] {
+    height: 180px !important;
+  }
+
+  /* Print text size */
+  .print\\:text-xl {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  /* Links should show as text in print */
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  /* Footer in print */
+  footer {
+    margin-top: 2rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #d1d5db;
+    font-size: 9pt;
+  }
+
+  /* Gradient backgrounds render as solid in some printers */
+  .bg-gradient-to-r {
+    background: #eef2ff !important;
+  }
 }
