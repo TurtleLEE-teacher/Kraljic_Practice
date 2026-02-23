@@ -212,16 +212,18 @@ button, a, input {
 
 /* ============================================================
    Print-Friendly Styles for Dashboard
+   ============================================================
+   Note: Tailwind v4 handles print: variant utilities automatically
+   (e.g., print:hidden, print:border, print:shadow-none, etc.).
+   The rules below cover non-utility print concerns only.
    ============================================================ */
 
 @media print {
-  /* Page setup for A4 */
   @page {
     size: A4 portrait;
     margin: 15mm 12mm;
   }
 
-  /* Reset backgrounds and shadows */
   body {
     background: white !important;
     color: #1a1a1a !important;
@@ -231,34 +233,8 @@ button, a, input {
     print-color-adjust: exact;
   }
 
-  /* Hide navigation, buttons, and non-essential interactive elements */
-  header,
-  nav,
-  .print\\:hidden {
-    display: none !important;
-  }
-
-  /* Show print-only elements */
-  .print\\:block {
-    display: block !important;
-  }
-
-  /* Remove shadows and adjust borders for print */
-  .shadow-sm,
-  .shadow-md,
-  .shadow-lg,
-  .shadow-xl {
-    box-shadow: none !important;
-  }
-
-  /* Ensure colored elements render in print */
+  /* Ensure colored elements and SVG charts render in print */
   * {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Ensure SVG charts render properly */
-  svg {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -268,11 +244,6 @@ button, a, input {
     min-height: 200px !important;
   }
 
-  .recharts-wrapper {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
   /* Prevent orphaned headers */
   h1, h2, h3, h4, h5, h6 {
     break-after: avoid;
@@ -280,91 +251,10 @@ button, a, input {
   }
 
   /* Prevent breaking inside cards */
-  .rounded-xl,
-  .rounded-2xl {
+  [class*="rounded-xl"],
+  [class*="rounded-2xl"] {
     break-inside: avoid;
     page-break-inside: avoid;
-  }
-
-  /* Page break control */
-  .print\\:break-before-page {
-    break-before: page;
-    page-break-before: always;
-  }
-
-  .print\\:break-inside-avoid {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Compact spacing for print */
-  .print\\:mb-6 {
-    margin-bottom: 1.5rem !important;
-  }
-
-  .print\\:py-4 {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-  }
-
-  .print\\:px-2 {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-
-  .print\\:p-4 {
-    padding: 1rem !important;
-  }
-
-  .print\\:gap-3 {
-    gap: 0.75rem !important;
-  }
-
-  /* Print border overrides */
-  .print\\:border {
-    border-width: 1px !important;
-    border-style: solid !important;
-  }
-
-  .print\\:border-gray-200 {
-    border-color: #e5e7eb !important;
-  }
-
-  .print\\:border-gray-300 {
-    border-color: #d1d5db !important;
-  }
-
-  .print\\:border-blue-200 {
-    border-color: #bfdbfe !important;
-  }
-
-  /* Print shadow override */
-  .print\\:shadow-none {
-    box-shadow: none !important;
-  }
-
-  /* Expand learning feedback panels in print */
-  .print\\:max-h-none {
-    max-height: none !important;
-  }
-
-  .print\\:opacity-100 {
-    opacity: 1 !important;
-  }
-
-  /* Chart height adjustments for print */
-  .print\\:h-\\[300px\\] {
-    height: 300px !important;
-  }
-
-  .print\\:h-\\[180px\\] {
-    height: 180px !important;
-  }
-
-  /* Print text size */
-  .print\\:text-xl {
-    font-size: 1.25rem !important;
-    line-height: 1.75rem !important;
   }
 
   /* Links should show as text in print */
@@ -379,10 +269,5 @@ button, a, input {
     padding-top: 0.5rem;
     border-top: 1px solid #d1d5db;
     font-size: 9pt;
-  }
-
-  /* Gradient backgrounds render as solid in some printers */
-  .bg-gradient-to-r {
-    background: #eef2ff !important;
   }
 }
