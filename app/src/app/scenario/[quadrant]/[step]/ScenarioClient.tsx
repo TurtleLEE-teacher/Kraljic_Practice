@@ -173,18 +173,8 @@ export default function ScenarioClient() {
       // Go to next step in same quadrant
       router.push(`/scenario/${quadrantId}/${nextStepNumber}`);
     } else {
-      // Quadrant complete, go to next quadrant or event
-      const currentQIndex = QUADRANT_ORDER.indexOf(quadrantId);
-      const nextQIndex = currentQIndex + 1;
-
-      if (nextQIndex < QUADRANT_ORDER.length) {
-        // Go to next quadrant
-        const nextQuadrant = QUADRANT_ORDER[nextQIndex];
-        router.push(`/scenario/${nextQuadrant}/1`);
-      } else {
-        // All quadrants done, go to event
-        router.push('/event');
-      }
+      // Quadrant complete — return to home so user can pick another or view results
+      router.push('/');
     }
   }, [quadrantId, stepNumber, dismissFeedback, router]);
 
