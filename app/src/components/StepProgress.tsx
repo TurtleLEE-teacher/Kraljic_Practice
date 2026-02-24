@@ -3,11 +3,11 @@
 interface StepProgressProps {
   currentStep: number; // 0-indexed
   totalSteps: number;
-  quadrantColor: string; // e.g., 'amber', 'emerald', 'blue', 'slate'
+  quadrantColor: string; // e.g., 'red', 'emerald', 'violet', 'slate'
 }
 
 const colorClasses: Record<string, { active: string; completed: string; text: string }> = {
-  amber: {
+  red: {
     active: 'bg-bottleneck-500 ring-bottleneck-200',
     completed: 'bg-bottleneck-500',
     text: 'text-bottleneck-700',
@@ -17,7 +17,7 @@ const colorClasses: Record<string, { active: string; completed: string; text: st
     completed: 'bg-leverage-500',
     text: 'text-leverage-700',
   },
-  blue: {
+  violet: {
     active: 'bg-strategic-500 ring-strategic-200',
     completed: 'bg-strategic-500',
     text: 'text-strategic-700',

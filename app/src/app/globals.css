@@ -4,21 +4,21 @@
   --background: #f8fafc;
   --foreground: #1e293b;
 
-  /* Bottleneck - Amber tones */
-  --bottleneck-50: #fffbeb;
-  --bottleneck-100: #fef3c7;
-  --bottleneck-200: #fde68a;
-  --bottleneck-300: #fcd34d;
-  --bottleneck-400: #fbbf24;
-  --bottleneck-500: #f59e0b;
-  --bottleneck-600: #d97706;
-  --bottleneck-700: #b45309;
-  --bottleneck-800: #92400e;
-  --bottleneck-900: #78350f;
-  --bottleneck-accent: #f59e0b;
-  --bottleneck-bg: #fffbeb;
-  --bottleneck-border: #fde68a;
-  --bottleneck-text: #92400e;
+  /* Bottleneck - Red tones */
+  --bottleneck-50: #fef2f2;
+  --bottleneck-100: #fee2e2;
+  --bottleneck-200: #fecaca;
+  --bottleneck-300: #fca5a5;
+  --bottleneck-400: #f87171;
+  --bottleneck-500: #ef4444;
+  --bottleneck-600: #dc2626;
+  --bottleneck-700: #b91c1c;
+  --bottleneck-800: #991b1b;
+  --bottleneck-900: #7f1d1d;
+  --bottleneck-accent: #ef4444;
+  --bottleneck-bg: #fef2f2;
+  --bottleneck-border: #fecaca;
+  --bottleneck-text: #991b1b;
 
   /* Leverage - Emerald tones */
   --leverage-50: #ecfdf5;
@@ -36,21 +36,21 @@
   --leverage-border: #a7f3d0;
   --leverage-text: #065f46;
 
-  /* Strategic - Blue tones */
-  --strategic-50: #eff6ff;
-  --strategic-100: #dbeafe;
-  --strategic-200: #bfdbfe;
-  --strategic-300: #93c5fd;
-  --strategic-400: #60a5fa;
-  --strategic-500: #3b82f6;
-  --strategic-600: #2563eb;
-  --strategic-700: #1d4ed8;
-  --strategic-800: #1e40af;
-  --strategic-900: #1e3a8a;
-  --strategic-accent: #3b82f6;
-  --strategic-bg: #eff6ff;
-  --strategic-border: #bfdbfe;
-  --strategic-text: #1e40af;
+  /* Strategic - Violet tones */
+  --strategic-50: #f5f3ff;
+  --strategic-100: #ede9fe;
+  --strategic-200: #ddd6fe;
+  --strategic-300: #c4b5fd;
+  --strategic-400: #a78bfa;
+  --strategic-500: #8b5cf6;
+  --strategic-600: #7c3aed;
+  --strategic-700: #6d28d9;
+  --strategic-800: #5b21b6;
+  --strategic-900: #4c1d95;
+  --strategic-accent: #8b5cf6;
+  --strategic-bg: #f5f3ff;
+  --strategic-border: #ddd6fe;
+  --strategic-text: #5b21b6;
 
   /* Non-critical - Slate tones */
   --noncritical-50: #f8fafc;

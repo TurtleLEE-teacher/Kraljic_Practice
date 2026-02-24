@@ -16,7 +16,7 @@ export const QUADRANT_META: Record<QuadrantId, QuadrantMeta> = {
     profitImpact: 'LOW',
     coreDilemma: '저비용 품목에 얼마나 투자할 것인가',
     weights: { ce: 0.20, ss: 0.50, sv: 0.30 },
-    color: 'amber',
+    color: 'red',
   },
   leverage: {
     id: 'leverage',
@@ -36,11 +36,11 @@ export const QUADRANT_META: Record<QuadrantId, QuadrantMeta> = {
     profitImpact: 'HIGH',
     coreDilemma: '파트너십 심화 vs 종속 회피',
     weights: { ce: 0.20, ss: 0.30, sv: 0.50 },
-    color: 'blue',
+    color: 'violet',
   },
   noncritical: {
     id: 'noncritical',
-    nameKo: '일상(비핵심)',
+    nameKo: '일반',
     nameEn: 'Non-critical',
     supplyRisk: 'LOW',
     profitImpact: 'LOW',

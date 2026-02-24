@@ -15,9 +15,9 @@ import type { QuadrantResult, QuadrantMeta, QuadrantId } from '@/lib/types';
 
 /** Map quadrant color names to actual hex values for Recharts */
 const COLOR_MAP: Record<string, string> = {
-  amber: '#f59e0b',
+  red: '#ef4444',
   emerald: '#10b981',
-  blue: '#3b82f6',
+  violet: '#8b5cf6',
   slate: '#64748b',
 };
 
