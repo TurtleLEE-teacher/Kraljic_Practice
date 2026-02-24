@@ -2,6 +2,8 @@
 
 Kraljic 매트릭스 기반 구매전략 의사결정 시뮬레이션 — 품목군별 실습 플랫폼
 
+**[Live Demo](https://turtlelee-teacher.github.io/Kraljic_Practice/)**
+
 ## Overview
 
 구매/조달 전문가를 위한 인터랙티브 학습 시뮬레이션입니다. Kraljic 매트릭스의 4개 사분면(병목, 레버리지, 전략, 비핵심)에 대해 실제 산업 시나리오를 기반으로 의사결정을 연습하고, 돌발 이벤트 대응까지 경험합니다.
