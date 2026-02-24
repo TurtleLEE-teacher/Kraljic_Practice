@@ -64,6 +64,15 @@ Layer 2: Event Response (공통 위기 시나리오)
 - **No Perfect Choice**: 모든 선택에 CE/SS/SV 트레이드오프 존재
 - **Comprehensive Dashboard**: 레이더 차트, 사분면별 분석, 순위 변동 추적
 
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router) + TypeScript
+- **Styling**: Tailwind CSS v4
+- **State**: Zustand (with localStorage persist)
+- **Charts**: Recharts (Radar, Bar)
+- **Database**: SQLite (better-sqlite3) + Drizzle ORM
+- **Runtime**: Node.js 20+
+
 ## Development Status
 
 - [x] Common Framework Design
@@ -73,8 +82,16 @@ Layer 2: Event Response (공통 위기 시나리오)
 - [x] Non-critical Scenario Design
 - [x] Event & Reversal Logic Design
 - [x] Integration Verification
-- [ ] Frontend Implementation
-- [ ] Backend / Scoring Engine
-- [ ] Database & State Management
-- [ ] Dashboard & Visualization
+- [x] Frontend Implementation (4 pages, 13 components)
+- [x] Backend / Scoring Engine (6 functions + 4 API routes)
+- [x] Database & State Management (SQLite + Zustand persist)
+- [x] Dashboard & Visualization (ScoreGauge, RadarChart, RankTracker)
 - [ ] Testing & QA
+
+## Getting Started
+
+```bash
+cd app
+npm install
+npm run dev    # http://localhost:3000
+```
