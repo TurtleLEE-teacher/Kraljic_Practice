@@ -54,7 +54,7 @@ export default function LandingPage() {
             <h1 className="text-xl font-bold text-white">
               Kraljic 매트릭스 워크샵
             </h1>
-            <p className="text-slate-400 text-xs mt-1">팀 기반 전략구매 의사결정 실습</p>
+            <p className="text-slate-400 text-xs mt-1">전략구매 의사결정 실습 + 품목군 맞추기 게임</p>
           </div>
 
           {/* Tab nav */}
@@ -90,7 +90,7 @@ export default function LandingPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="팀명 입력"
+                  placeholder="이름 (또는 팀명) 입력"
                   className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm
                              focus:outline-none focus:border-blue-500
                              placeholder:text-gray-400 transition-colors"
@@ -100,7 +100,7 @@ export default function LandingPage() {
 
               {/* Quadrant selection */}
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                팀이 맡을 사분면을 선택하세요
+                사분면을 선택하세요
               </p>
 
               <div className="grid grid-cols-1 gap-2.5">
@@ -170,8 +170,9 @@ export default function LandingPage() {
               {/* Team tip */}
               <div className="mt-4 bg-slate-50 rounded-lg px-4 py-3">
                 <p className="text-[11px] text-gray-500 leading-relaxed">
-                  <strong className="text-gray-700">워크샵 진행 방법:</strong>{' '}
-                  각 팀이 사분면을 하나씩 맡아 토론하며 의사결정을 내리고, 완료 후 팀 간 결과를 비교해 보세요. 정답은 없습니다.
+                  <strong className="text-gray-700">게임 진행:</strong>{' '}
+                  각자 사분면을 하나씩 맡아 4단계 의사결정을 완료하면, 품목군 이름이 가려진 결과 화면이 나옵니다.
+                  다른 참가자들이 어떤 품목군인지 맞추고, 맞추면 발표자가 간단히 설명합니다. 점수가 높은 사람이 승리!
                 </p>
               </div>
             </div>
@@ -187,7 +188,7 @@ export default function LandingPage() {
 
         <p className="text-center text-xs text-gray-400 mt-4">
           {activeTab === 'simulation'
-            ? '사분면 1개 선택 → 팀 토론 → 4단계 의사결정 → 가치 성향 분석'
+            ? '사분면 선택 → 4단계 의사결정 → 품목군 맞추기 → 발표'
             : 'EOQ · Safety Stock · Reorder Point'}
         </p>
       </div>

@@ -289,7 +289,7 @@ export default function ScenarioClient() {
                   <div>
                     <h3 className="text-sm font-bold text-violet-800 mb-1">팀 토론 질문</h3>
                     <p className="text-sm text-violet-700 leading-relaxed">{currentStep.discussionPrompt}</p>
-                    <p className="text-xs text-violet-500 mt-2">선택 전에 팀원들과 충분히 토론해 보세요. 정답은 없습니다.</p>
+                    <p className="text-xs text-violet-500 mt-2">선택 전에 충분히 생각해 보세요. 정답은 없습니다.</p>
                   </div>
                 </div>
               </div>
@@ -320,7 +320,7 @@ export default function ScenarioClient() {
                     <textarea
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
-                      placeholder="왜 이 선택을 했는지 팀의 논의 내용을 간단히 적어주세요..."
+                      placeholder="왜 이 선택을 했는지 간단히 적어주세요..."
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm resize-none
                                  focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200
                                  placeholder:text-gray-400 transition-colors"
@@ -338,7 +338,7 @@ export default function ScenarioClient() {
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  팀 결론 제출
+                  결론 제출
                 </button>
 
                 <p className="text-center text-xs text-gray-400">
