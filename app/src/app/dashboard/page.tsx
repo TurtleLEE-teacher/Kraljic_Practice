@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { QuadrantId } from '@/lib/types';
+import type { QuadrantId, ScenarioData } from '@/lib/types';
 import { QUADRANT_META, QUADRANT_ORDER } from '@/data/quadrants';
 import { useGameStore } from '@/store/gameStore';
 import { normalizeScore, DIM_LABELS } from '@/lib/scoring';
@@ -12,7 +12,48 @@ import {
   type SubmitStatus,
 } from '@/lib/notionSubmit';
 
-/** Dimension insight by quadrant and dominant dimension */
+/** Load scenario data dynamically */
+async function loadScenarioData(quadrantId: QuadrantId): Promise<ScenarioData | null> {
+  try {
+    switch (quadrantId) {
+      case 'bottleneck': {
+        const { bottleneckScenario } = await import('@/data/bottleneck');
+        return bottleneckScenario;
+      }
+      case 'leverage': {
+        const { leverageScenario } = await import('@/data/leverage');
+        return leverageScenario;
+      }
+      case 'strategic': {
+        const { strategicScenario } = await import('@/data/strategic');
+        return strategicScenario;
+      }
+      case 'noncritical': {
+        const { noncriticalScenario } = await import('@/data/noncritical');
+        return noncriticalScenario;
+      }
+      default:
+        return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+/** Redact quadrant names from text */
+function redactText(text: string): string {
+  return text
+    .replace(/병목/g, '●●')
+    .replace(/레버리지/g, '●●●●')
+    .replace(/전략/g, '●●')
+    .replace(/일반/g, '●●')
+    .replace(/Bottleneck/gi, '●●●●')
+    .replace(/Leverage/gi, '●●●●')
+    .replace(/Strategic/gi, '●●●●')
+    .replace(/Non-?critical/gi, '●●●●');
+}
+
+/** Dimension insight by quadrant */
 const QUADRANT_DIM_INSIGHT: Record<QuadrantId, Record<string, string>> = {
   bottleneck: {
     ce: '비용 절약을 중시했지만, 병목 품목에서는 공급 안정성이 더 중요합니다.',
@@ -36,9 +77,38 @@ const QUADRANT_DIM_INSIGHT: Record<QuadrantId, Record<string, string>> = {
   },
 };
 
+/** Quadrant brief explanation for presentation */
+const QUADRANT_EXPLAIN: Record<QuadrantId, { risk: string; impact: string; strategy: string }> = {
+  bottleneck: {
+    risk: '공급 위험 높음',
+    impact: '수익 영향 낮음',
+    strategy: '금액은 작지만 대체 불가한 품목. 공급 안정성 확보가 최우선.',
+  },
+  leverage: {
+    risk: '공급 위험 낮음',
+    impact: '수익 영향 높음',
+    strategy: '대체 공급사가 많고 금액이 큰 품목. 경쟁을 활용한 비용 절감이 핵심.',
+  },
+  strategic: {
+    risk: '공급 위험 높음',
+    impact: '수익 영향 높음',
+    strategy: '핵심 부품으로 공급사와 전략적 파트너십이 필수. 종속 vs 협력의 균형이 핵심.',
+  },
+  noncritical: {
+    risk: '공급 위험 낮음',
+    impact: '수익 영향 낮음',
+    strategy: '소액 다품종 품목. 관리 비용을 줄이는 효율화가 핵심.',
+  },
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const store = useGameStore();
+
+  // 발표 모드 상태
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [revealAnimation, setRevealAnimation] = useState(false);
+  const [scenarioData, setScenarioData] = useState<ScenarioData | null>(null);
 
   // 완료된 사분면 찾기 (가장 최근 완료)
   const completedQuadrant = useMemo<QuadrantId | null>(() => {
@@ -48,6 +118,12 @@ export default function DashboardPage() {
     }
     return null;
   }, [store.submissions]);
+
+  // 시나리오 데이터 로드
+  useEffect(() => {
+    if (!completedQuadrant) return;
+    loadScenarioData(completedQuadrant).then(setScenarioData);
+  }, [completedQuadrant]);
 
   // 해당 사분면 스텝별 데이터
   const stepData = useMemo(() => {
@@ -70,7 +146,7 @@ export default function DashboardPage() {
     return { ce, ss, sv };
   }, [stepData]);
 
-  // 가장 높은 차원 (팀 성향)
+  // 가장 높은 차원
   const sortedDims = useMemo(() => {
     const dims = [
       { key: 'ce' as const, val: dimTotals.ce, label: DIM_LABELS.ce },
@@ -80,7 +156,7 @@ export default function DashboardPage() {
     return dims.sort((a, b) => b.val - a.val);
   }, [dimTotals]);
 
-  // 핵심 차원 (사분면에서 가장 중요한 차원)
+  // 핵심 차원
   const primaryDim = useMemo(() => {
     if (!meta) return null;
     const dims = [
@@ -91,7 +167,6 @@ export default function DashboardPage() {
     return dims.sort((a, b) => b.w - a.w)[0];
   }, [meta]);
 
-  // 팀의 가치 성향 vs 사분면의 핵심 차원
   const teamAlignment = useMemo(() => {
     if (!primaryDim || !completedQuadrant) return null;
     const teamTop = sortedDims[0].key;
@@ -99,12 +174,22 @@ export default function DashboardPage() {
     return { teamTop, isAligned };
   }, [primaryDim, sortedDims, completedQuadrant]);
 
-  // 선택 이유 모음
-  const reasons = useMemo(() => {
-    return stepData
-      .filter((s) => s.reason)
-      .map((s) => ({ step: s.step + 1, reason: s.reason! }));
-  }, [stepData]);
+  // 선택된 옵션 제목 가져오기
+  const choiceTitles = useMemo(() => {
+    if (!scenarioData) return [];
+    return stepData.map((sub) => {
+      const step = scenarioData.steps[sub.step];
+      if (!step) return '\u2014';
+      const choice = step.choices.find((c) => c.id === sub.choiceId);
+      return choice ? choice.title : '\u2014';
+    });
+  }, [scenarioData, stepData]);
+
+  // 정답 공개 핸들러
+  const handleReveal = useCallback(() => {
+    setRevealAnimation(true);
+    setTimeout(() => setIsRevealed(true), 600);
+  }, []);
 
   // Notion submit
   const [notionStatus, setNotionStatus] = useState<SubmitStatus>('idle');
@@ -134,7 +219,6 @@ export default function DashboardPage() {
       dimSv: dimTotals.sv,
       teamTopValue: sortedDims[0].label,
       choices: stepData.map((s) => s.choiceId),
-      reasons: reasons.map((r) => `Step ${r.step}: ${r.reason}`),
       submittedAt: new Date().toISOString(),
     };
 
@@ -145,12 +229,12 @@ export default function DashboardPage() {
         body: JSON.stringify(payload),
       });
       setNotionStatus(res.ok ? 'success' : 'error');
-      setNotionMsg(res.ok ? '전송 완료' : `전송 실패 (${res.status})`);
+      setNotionMsg(res.ok ? '\uc804\uc1a1 \uc644\ub8cc' : `\uc804\uc1a1 \uc2e4\ud328 (${res.status})`);
     } catch {
       setNotionStatus('error');
-      setNotionMsg('네트워크 오류');
+      setNotionMsg('\ub124\ud2b8\uc6cc\ud06c \uc624\ub958');
     }
-  }, [completedQuadrant, meta, store.sessionId, store.participantName, score100, rawTotal, dimTotals, stepData, sortedDims, reasons]);
+  }, [completedQuadrant, meta, store.sessionId, store.participantName, score100, rawTotal, dimTotals, stepData, sortedDims]);
 
   const handleSaveNotionConfig = useCallback(() => {
     if (!notionUrl.trim()) return;
@@ -180,13 +264,147 @@ export default function DashboardPage() {
   }
 
   const colorHex = meta.color === 'red' ? '#ef4444' : meta.color === 'emerald' ? '#10b981' : meta.color === 'violet' ? '#8b5cf6' : '#64748b';
+  const explain = QUADRANT_EXPLAIN[completedQuadrant];
 
+  // ==========================================
+  // 발표 모드 (정답 가려진 상태)
+  // ==========================================
+  if (!isRevealed) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+            <span className="text-sm font-semibold text-gray-700">품목군 맞추기</span>
+            <button onClick={() => router.push('/')} className="text-xs text-gray-400 hover:text-gray-600">
+              홈으로
+            </button>
+          </div>
+        </header>
+
+        <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+          {/* 발표자 + 미스터리 */}
+          <section className="bg-white rounded-2xl shadow-sm p-6 text-center">
+            <p className="text-sm text-gray-500 mb-3">{store.participantName} 님의 품목군</p>
+            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-4 ${revealAnimation ? 'animate-pulse' : ''}`}>
+              <span className="text-3xl font-black text-gray-400">?</span>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">어떤 품목군일까요?</h1>
+            <p className="text-sm text-gray-500 mt-2">아래 힌트를 보고 4가지 사분면 중 하나를 맞춰보세요!</p>
+            <div className="flex justify-center gap-2 mt-3">
+              {['병목', '레버리지', '전략', '일반'].map((name) => (
+                <span key={name} className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                  {name}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          {/* 힌트 1: 기업·품목 정보 */}
+          {scenarioData && (
+            <section className="bg-white rounded-2xl shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">1</span>
+                <h2 className="text-base font-bold text-gray-800">기업 및 품목 정보</h2>
+              </div>
+              <div className="space-y-2 text-sm text-gray-700">
+                <p><strong>기업:</strong> {scenarioData.background.companyName} ({scenarioData.background.industry})</p>
+                <p><strong>품목:</strong> {scenarioData.background.itemName}</p>
+                <p><strong>연간 구매액:</strong> {scenarioData.background.annualSpend}</p>
+                <p className="text-gray-600 text-xs mt-2">{redactText(scenarioData.background.itemDescription)}</p>
+              </div>
+              <div className="mt-3 space-y-1">
+                {scenarioData.background.keyMetrics.map((m, i) => (
+                  <p key={i} className="text-xs text-gray-500 pl-3 border-l-2 border-gray-200">{redactText(m)}</p>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* 힌트 2: 의사결정 요약 */}
+          {scenarioData && (
+            <section className="bg-white rounded-2xl shadow-sm p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center text-xs font-bold text-violet-600">2</span>
+                <h2 className="text-base font-bold text-gray-800">4단계 의사결정 요약</h2>
+              </div>
+              <div className="space-y-3">
+                {scenarioData.steps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
+                    <span className="text-xs font-bold text-gray-400 flex-shrink-0 mt-1">Step {i + 1}</span>
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{redactText(step.title)}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        선택: <span className="font-medium text-gray-700">{redactText(choiceTitles[i] || '\u2014')}</span>
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* 힌트 3: 가치 차원 분석 */}
+          <section className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">3</span>
+              <h2 className="text-base font-bold text-gray-800">가치 차원 분석</h2>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">이 참가자가 4단계에서 어떤 가치를 중시했는지 보여줍니다</p>
+            <div className="space-y-3">
+              {sortedDims.map((dim, i) => {
+                const max = 20;
+                const pct = (dim.val / max) * 100;
+                const isTop = i === 0;
+                return (
+                  <div key={dim.key}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-sm ${isTop ? 'font-bold text-gray-900' : 'text-gray-600'}`}>
+                        {dim.label}
+                        {isTop && <span className="text-xs ml-1.5 text-violet-600 font-semibold">가장 중시</span>}
+                      </span>
+                      <span className="text-xs text-gray-400">{dim.val}/{max}</span>
+                    </div>
+                    <div className="w-full h-3.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, backgroundColor: isTop ? '#6b7280' : '#d1d5db' }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* 정답 공개 버튼 */}
+          <section className="text-center space-y-3">
+            <p className="text-sm text-gray-500">다른 참가자들이 답을 정했으면 공개하세요!</p>
+            <button
+              onClick={handleReveal}
+              className={`px-8 py-4 bg-gradient-to-r from-violet-600 to-blue-600 text-white text-lg font-bold rounded-2xl shadow-lg
+                         hover:from-violet-700 hover:to-blue-700 active:scale-95 transition-all duration-200 cursor-pointer
+                         ${revealAnimation ? 'animate-bounce' : ''}`}
+            >
+              정답 공개
+            </button>
+          </section>
+
+          <footer className="text-center text-xs text-gray-400 py-4 border-t border-gray-100">
+            Kraljic Matrix 워크샵
+          </footer>
+        </main>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 정답 공개 후 (전체 결과 + 발표 가이드)
+  // ==========================================
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
-      {/* 헤더 */}
       <header className="bg-white border-b border-gray-200 print:hidden">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <span className="text-sm font-semibold text-gray-700">팀 분석 결과</span>
+          <span className="text-sm font-semibold text-gray-700">정답 공개!</span>
           <button onClick={() => router.push('/')} className="text-xs text-gray-400 hover:text-gray-600">
             홈으로
           </button>
@@ -194,25 +412,63 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8 print:py-4 space-y-6">
-        {/* 1. 사분면 + 팀 정보 */}
-        <section className="bg-white rounded-2xl shadow-sm p-6 text-center">
-          <p className="text-sm text-gray-500 mb-1">{store.participantName} 팀</p>
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: colorHex }} />
-            <h1 className="text-xl font-bold text-gray-900">
-              {meta.nameKo} <span className="text-sm font-normal text-gray-400">({meta.nameEn})</span>
+        {/* 정답 공개 */}
+        <section className="bg-white rounded-2xl shadow-lg p-8 text-center border-2" style={{ borderColor: colorHex }}>
+          <p className="text-sm text-gray-500 mb-2">{store.participantName} 님의 품목군은</p>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <span className="w-5 h-5 rounded-full" style={{ backgroundColor: colorHex }} />
+            <h1 className="text-3xl font-black" style={{ color: colorHex }}>
+              {meta.nameKo}
             </h1>
+            <span className="text-base font-normal text-gray-400">({meta.nameEn})</span>
           </div>
-          <p className="text-sm text-gray-600 max-w-sm mx-auto">
-            핵심 딜레마: &ldquo;{meta.coreDilemma}&rdquo;
-          </p>
+          <div className="inline-flex items-center gap-4 text-sm text-gray-600 mt-2">
+            <span>공급 위험: <strong>{explain.risk}</strong></span>
+            <span className="text-gray-300">|</span>
+            <span>수익 영향: <strong>{explain.impact}</strong></span>
+          </div>
+          <p className="text-sm text-gray-700 mt-3 max-w-md mx-auto">{explain.strategy}</p>
+          <div className="mt-4 text-3xl font-extrabold" style={{ color: colorHex }}>
+            {score100}<span className="text-sm font-normal text-gray-400"> / 100점</span>
+          </div>
         </section>
 
-        {/* 2. 가치 성향 분석 (핵심 섹션) */}
-        <section className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-base font-bold text-gray-800 mb-1">팀의 가치 성향 분석</h2>
-          <p className="text-xs text-gray-500 mb-5">4단계 의사결정에서 팀이 어떤 가치를 우선시했는지 보여줍니다</p>
+        {/* 발표 가이드 */}
+        <section className="bg-white rounded-2xl shadow-sm p-6" style={{ borderLeft: `4px solid ${colorHex}` }}>
+          <h2 className="text-base font-bold text-gray-800 mb-3">발표 가이드</h2>
+          <p className="text-xs text-gray-500 mb-3">아래 내용을 참고하여 30초~1분 간단히 발표해 주세요.</p>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-gray-50">
+              <span className="text-xs font-bold text-gray-400 flex-shrink-0">1.</span>
+              <p className="text-sm text-gray-700">
+                <strong>{meta.nameKo}</strong> 사분면이란? &mdash; {explain.strategy}
+              </p>
+            </div>
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-gray-50">
+              <span className="text-xs font-bold text-gray-400 flex-shrink-0">2.</span>
+              <p className="text-sm text-gray-700">
+                핵심 딜레마: &ldquo;{meta.coreDilemma}&rdquo;
+              </p>
+            </div>
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-gray-50">
+              <span className="text-xs font-bold text-gray-400 flex-shrink-0">3.</span>
+              <p className="text-sm text-gray-700">
+                4단계 중 가장 어려웠던 의사결정과 그 이유
+              </p>
+            </div>
+            <div className="flex items-start gap-2 p-2.5 rounded-lg bg-gray-50">
+              <span className="text-xs font-bold text-gray-400 flex-shrink-0">4.</span>
+              <p className="text-sm text-gray-700">
+                가치 차원 분석: {sortedDims[0].label}을(를) 가장 중시한 이유
+              </p>
+            </div>
+          </div>
+        </section>
 
+        {/* 가치 성향 분석 (공개 후 색상 포함) */}
+        <section className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-base font-bold text-gray-800 mb-1">가치 성향 분석</h2>
+          <p className="text-xs text-gray-500 mb-5">4단계 의사결정에서 어떤 가치를 우선시했는지 보여줍니다</p>
           <div className="space-y-4">
             {sortedDims.map((dim, i) => {
               const max = 20;
@@ -225,7 +481,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between mb-1.5">
                     <span className={`text-sm ${isTop ? 'font-bold text-gray-900' : 'text-gray-600'}`}>
                       {dim.label}
-                      {isTop && <span className="text-xs ml-1.5 text-violet-600 font-semibold">팀 중시</span>}
+                      {isTop && <span className="text-xs ml-1.5 text-violet-600 font-semibold">가장 중시</span>}
                       {isPrimary && <span className="text-xs ml-1.5 font-medium" style={{ color: colorHex }}>사분면 핵심</span>}
                     </span>
                     <span className="text-xs text-gray-400">{dim.val}/{max} (가중치 {(weight * 100).toFixed(0)}%)</span>
@@ -244,7 +500,6 @@ export default function DashboardPage() {
             })}
           </div>
 
-          {/* 정합성 분석 */}
           {teamAlignment && completedQuadrant && (
             <div className={`mt-5 p-4 rounded-xl border ${
               teamAlignment.isAligned
@@ -253,13 +508,13 @@ export default function DashboardPage() {
             }`}>
               {teamAlignment.isAligned ? (
                 <p className="text-sm text-emerald-800">
-                  팀이 <strong>{DIM_LABELS[teamAlignment.teamTop]}</strong>을(를) 가장 중시했는데, 이는{' '}
+                  <strong>{DIM_LABELS[teamAlignment.teamTop]}</strong>을(를) 가장 중시했는데, 이는{' '}
                   {meta.nameKo} 사분면의 핵심 차원과 일치합니다.{' '}
                   {QUADRANT_DIM_INSIGHT[completedQuadrant][teamAlignment.teamTop]}
                 </p>
               ) : (
                 <p className="text-sm text-amber-800">
-                  팀이 <strong>{DIM_LABELS[teamAlignment.teamTop]}</strong>을(를) 가장 중시했지만,{' '}
+                  <strong>{DIM_LABELS[teamAlignment.teamTop]}</strong>을(를) 가장 중시했지만,{' '}
                   {meta.nameKo} 사분면의 핵심 차원은 <strong>{primaryDim ? DIM_LABELS[primaryDim.key] : ''}</strong>입니다.{' '}
                   {QUADRANT_DIM_INSIGHT[completedQuadrant][teamAlignment.teamTop]}
                 </p>
@@ -268,16 +523,21 @@ export default function DashboardPage() {
           )}
         </section>
 
-        {/* 3. 단계별 요약 */}
+        {/* 단계별 요약 */}
         <section className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-base font-bold text-gray-800 mb-4">단계별 의사결정 요약</h2>
+          <h2 className="text-base font-bold text-gray-800 mb-4">단계별 의사결정</h2>
           <div className="space-y-3">
             {stepData.map((sub, i) => {
               const pct = Math.min(100, Math.round((sub.scores.weighted / 5) * 100));
               return (
                 <div key={i} className="bg-gray-50 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-gray-700">Step {i + 1}</span>
+                    <div>
+                      <span className="text-sm font-semibold text-gray-700">Step {i + 1}</span>
+                      {scenarioData && (
+                        <span className="text-xs text-gray-400 ml-2">{scenarioData.steps[i]?.title}</span>
+                      )}
+                    </div>
                     <div className="text-[10px] text-gray-400 flex items-center gap-2">
                       <span>CE:{sub.scores.raw.ce}</span>
                       <span>SS:{sub.scores.raw.ss}</span>
@@ -290,60 +550,16 @@ export default function DashboardPage() {
                       style={{ width: `${pct}%`, backgroundColor: colorHex }}
                     />
                   </div>
-                  {sub.reason && (
-                    <p className="mt-2 text-xs text-gray-500 italic">&ldquo;{sub.reason}&rdquo;</p>
-                  )}
+                  <p className="mt-1.5 text-xs text-gray-600">
+                    선택: {choiceTitles[i] || '\u2014'}
+                  </p>
                 </div>
               );
             })}
           </div>
-          <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-sm font-semibold text-gray-700">종합 점수</span>
-            <span className="text-lg font-extrabold" style={{ color: colorHex }}>{score100}<span className="text-sm font-normal text-gray-400"> / 100</span></span>
-          </div>
         </section>
 
-        {/* 4. 토론 가이드 */}
-        <section className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-base font-bold text-gray-800 mb-3">팀 토론 가이드</h2>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-violet-50">
-              <span className="text-sm font-bold text-violet-600 flex-shrink-0">Q1</span>
-              <p className="text-sm text-violet-800">
-                각 단계에서 다른 선택을 했다면 어떤 결과가 나왔을까요? 가장 고민됐던 단계는?
-              </p>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50">
-              <span className="text-sm font-bold text-blue-600 flex-shrink-0">Q2</span>
-              <p className="text-sm text-blue-800">
-                이 사분면에서 {meta.nameKo === '병목' ? '공급 안정성' : meta.nameKo === '레버리지' ? '비용 절감' : meta.nameKo === '전략' ? '전략적 가치' : '관리 효율'}을(를) 우선시한 이유는 무엇인가요?
-              </p>
-            </div>
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-50">
-              <span className="text-sm font-bold text-emerald-600 flex-shrink-0">Q3</span>
-              <p className="text-sm text-emerald-800">
-                다른 팀과 결과를 비교해 보세요. 같은 상황에서 다른 선택을 한 팀이 있나요? 그 이유는?
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. 팀의 선택 이유 (있는 경우) */}
-        {reasons.length > 0 && (
-          <section className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-base font-bold text-gray-800 mb-3">팀의 선택 이유 기록</h2>
-            <div className="space-y-2">
-              {reasons.map((r) => (
-                <div key={r.step} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
-                  <span className="text-xs font-bold text-gray-500 flex-shrink-0 mt-0.5">Step {r.step}</span>
-                  <p className="text-sm text-gray-700">{r.reason}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* 6. 액션 */}
+        {/* 액션 */}
         <section className="print:hidden space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
