@@ -14,12 +14,12 @@ export default function ScoreBar({ currentScore, maxScore, label }: ScoreBarProp
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-sm font-medium text-gray-600">{label}</span>
         <span className="text-sm font-bold text-gray-800">
-          {currentScore.toFixed(1)} <span className="text-gray-400 font-normal">/ {maxScore.toFixed(1)}</span>
+          {Math.round(currentScore)} <span className="text-gray-400 font-normal">/ {Math.round(maxScore)}</span>
         </span>
       </div>
       <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-700 ease-out"
+          className="h-full rounded-full bg-gradient-to-r from-violet-500 to-violet-600 transition-all duration-700 ease-out"
           style={{ width: `${percentage}%` }}
         />
       </div>

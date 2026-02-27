@@ -156,13 +156,13 @@ export default function LandingPage() {
               {completedQuadrants.length > 0 && (
                 <div className="mt-4 flex items-center justify-between">
                   <span className="text-xs text-gray-400">
-                    {completedQuadrants.length}/4 사분면 완료
+                    {completedQuadrants.length}개 완료
                   </span>
                   <button
                     onClick={() => router.push('/dashboard')}
-                    className="text-xs font-semibold text-blue-600 hover:text-blue-800 cursor-pointer"
+                    className="text-xs font-semibold text-violet-600 hover:text-violet-800 cursor-pointer"
                   >
-                    결과 보기 &rarr;
+                    최근 결과 보기 &rarr;
                   </button>
                 </div>
               )}
@@ -170,8 +170,8 @@ export default function LandingPage() {
               {/* Team tip */}
               <div className="mt-4 bg-slate-50 rounded-lg px-4 py-3">
                 <p className="text-[11px] text-gray-500 leading-relaxed">
-                  <strong className="text-gray-700">팀 실습:</strong>{' '}
-                  각 팀이 서로 다른 사분면을 담당 &rarr; 완료 후 결과를 비교하며 토론
+                  <strong className="text-gray-700">팀 실습 팁:</strong>{' '}
+                  각 팀원이 서로 다른 사분면을 맡아 완료 후 결과를 비교하며 토론해 보세요.
                 </p>
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function LandingPage() {
 
         <p className="text-center text-xs text-gray-400 mt-4">
           {activeTab === 'simulation'
-            ? '사분면당 약 10분 | 4단계 x 3선택지'
+            ? '사분면 1개 선택 → 4단계 → 100점 만점 결과'
             : 'EOQ · Safety Stock · Reorder Point'}
         </p>
       </div>
