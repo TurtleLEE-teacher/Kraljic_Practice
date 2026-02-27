@@ -4,16 +4,13 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { QUADRANT_ORDER, QUADRANT_META } from '@/data/quadrants';
+import { normalizeScore } from '@/lib/scoring';
 import type { QuadrantId, ScenarioData, Choice, WeightedScore } from '@/lib/types';
 
 import ScenarioBriefing from '@/components/ScenarioBriefing';
 import ChoiceCard from '@/components/ChoiceCard';
 import FeedbackPanel from '@/components/FeedbackPanel';
 import StepProgress from '@/components/StepProgress';
-import ScoreBar from '@/components/ScoreBar';
-
-/** 100점 환산 계수 (사분면 1개 만점 raw=20 → 100) */
-const SCORE_SCALE = 5;
 
 async function loadScenarioData(quadrantId: QuadrantId): Promise<ScenarioData | null> {
   try {
@@ -72,13 +69,13 @@ export default function ScenarioClient() {
     dismissFeedback,
   } = useGameStore();
 
-  // 현재 사분면의 누적 점수만 (100점 환산)
+  // 현재 사분면의 누적 점수 (정규화된 100점 기준)
   const quadrantScore = useMemo(() => {
     if (!quadrantId) return 0;
     const raw = submissions
       .filter((s) => s.quadrant === quadrantId)
       .reduce((sum, s) => sum + s.scores.weighted, 0);
-    return Math.round(raw * SCORE_SCALE);
+    return normalizeScore(raw, quadrantId);
   }, [submissions, quadrantId]);
 
   const isStepSubmitted = useMemo(() => {
@@ -91,6 +88,7 @@ export default function ScenarioClient() {
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [briefingCollapsed, setBriefingCollapsed] = useState(false);
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
     if (!quadrantId) return;
@@ -105,6 +103,7 @@ export default function ScenarioClient() {
     setSelectedChoiceId(null);
     setIsConfirmed(false);
     setBriefingCollapsed(stepIndex > 0);
+    setReason('');
   }, [quadrantId, stepIndex]);
 
   useEffect(() => {
@@ -124,11 +123,12 @@ export default function ScenarioClient() {
       step: stepIndex,
       choiceId: selectedChoiceId,
       scores: weightedScore,
+      reason: reason.trim() || undefined,
       timestamp: Date.now(),
     });
     setIsConfirmed(true);
     showChoiceFeedback(choice.feedback);
-  }, [selectedChoiceId, scenarioData, quadrantId, stepIndex, submitChoice, showChoiceFeedback]);
+  }, [selectedChoiceId, scenarioData, quadrantId, stepIndex, submitChoice, showChoiceFeedback, reason]);
 
   const handleFeedbackContinue = useCallback(() => {
     dismissFeedback();
@@ -137,7 +137,6 @@ export default function ScenarioClient() {
     if (stepNumber < 4) {
       router.push(`/scenario/${quadrantId}/${stepNumber + 1}`);
     } else {
-      // 사분면 완료 → 결과 대시보드
       router.push('/dashboard');
     }
   }, [quadrantId, stepNumber, dismissFeedback, router]);
@@ -207,8 +206,13 @@ export default function ScenarioClient() {
               <span className="text-xs font-normal text-gray-400 ml-1">({quadrantMeta.nameEn})</span>
             </h1>
           </div>
-          <div className="w-44">
-            <ScoreBar currentScore={quadrantScore} maxScore={100} label="점수" />
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-400">{stepNumber}/4 단계</span>
+            {quadrantScore > 0 && (
+              <span className="text-xs font-semibold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
+                {quadrantScore}점
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -260,8 +264,9 @@ export default function ScenarioClient() {
             </div>
           </div>
 
-          {/* 오른쪽: 상황 + 선택지 */}
+          {/* 오른쪽: 상황 + 토론 + 선택지 */}
           <div className="lg:col-span-8 space-y-6">
+            {/* 상황 설명 */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-3">
                 <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-xs font-bold">
@@ -269,9 +274,28 @@ export default function ScenarioClient() {
                 </span>
                 <h2 className="text-lg font-bold text-gray-900">{currentStep.title}</h2>
               </div>
-              <p className="text-sm text-gray-700 leading-relaxed">{currentStep.situation}</p>
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{currentStep.situation}</p>
             </div>
 
+            {/* 팀 토론 질문 */}
+            {currentStep.discussionPrompt && (
+              <div className="bg-violet-50 rounded-xl border border-violet-200 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-violet-800 mb-1">팀 토론 질문</h3>
+                    <p className="text-sm text-violet-700 leading-relaxed">{currentStep.discussionPrompt}</p>
+                    <p className="text-xs text-violet-500 mt-2">선택 전에 팀원들과 충분히 토론해 보세요. 정답은 없습니다.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 선택지 */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide px-1">선택지</h3>
               {currentStep.choices.map((choice) => (
@@ -285,8 +309,26 @@ export default function ScenarioClient() {
               ))}
             </div>
 
+            {/* 선택 이유 + 제출 */}
             {!isConfirmed && (
-              <div className="pt-2">
+              <div className="space-y-4 pt-2">
+                {selectedChoiceId && (
+                  <div className="bg-white rounded-xl border border-gray-200 p-5">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      선택 이유 <span className="text-xs font-normal text-gray-400">(선택사항)</span>
+                    </label>
+                    <textarea
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="왜 이 선택을 했는지 팀의 논의 내용을 간단히 적어주세요..."
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm resize-none
+                                 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200
+                                 placeholder:text-gray-400 transition-colors"
+                      rows={3}
+                    />
+                  </div>
+                )}
+
                 <button
                   onClick={handleConfirm}
                   disabled={!selectedChoiceId}
@@ -296,8 +338,12 @@ export default function ScenarioClient() {
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  선택 확정
+                  팀 결론 제출
                 </button>
+
+                <p className="text-center text-xs text-gray-400">
+                  각 선택에는 장단점이 있습니다. 상황에 맞는 최선의 판단을 내려주세요.
+                </p>
               </div>
             )}
 

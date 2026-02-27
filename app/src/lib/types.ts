@@ -69,6 +69,7 @@ export interface Step {
   stepNumber: number;   // 1-4
   title: string;
   situation: string;    // Situation description for this step
+  discussionPrompt?: string; // 팀 토론 질문
   choices: [Choice, Choice, Choice]; // Always exactly 3 choices (A, B, C)
 }
 
@@ -104,6 +105,7 @@ export interface SubmissionRecord {
   step: number;
   choiceId: string;
   scores: WeightedScore;
+  reason?: string; // 팀의 선택 이유
   timestamp: number;
 }
 
