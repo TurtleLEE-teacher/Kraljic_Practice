@@ -5,9 +5,9 @@ import type { QuadrantResult, QuadrantMeta, QuadrantId } from '@/lib/types';
 
 /** Color map for quadrant themes */
 const COLOR_MAP: Record<string, { primary: string; bg: string }> = {
-  amber: { primary: '#f59e0b', bg: '#fffbeb' },
+  red: { primary: '#ef4444', bg: '#fef2f2' },
   emerald: { primary: '#10b981', bg: '#ecfdf5' },
-  blue: { primary: '#3b82f6', bg: '#eff6ff' },
+  violet: { primary: '#8b5cf6', bg: '#f5f3ff' },
   slate: { primary: '#64748b', bg: '#f8fafc' },
 };
 

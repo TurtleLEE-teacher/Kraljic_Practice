@@ -5,12 +5,12 @@ import type { QuadrantResult, QuadrantMeta, WeightedScore } from '@/lib/types';
 
 /** Map quadrant color names to Tailwind-compatible hex and style values */
 const COLOR_STYLES: Record<string, { border: string; bg: string; badge: string; accent: string; bar: string }> = {
-  amber: {
-    border: '#f59e0b',
-    bg: '#fffbeb',
-    badge: '#92400e',
-    accent: '#fbbf24',
-    bar: '#f59e0b',
+  red: {
+    border: '#ef4444',
+    bg: '#fef2f2',
+    badge: '#991b1b',
+    accent: '#f87171',
+    bar: '#ef4444',
   },
   emerald: {
     border: '#10b981',
@@ -19,12 +19,12 @@ const COLOR_STYLES: Record<string, { border: string; bg: string; badge: string; 
     accent: '#34d399',
     bar: '#10b981',
   },
-  blue: {
-    border: '#3b82f6',
-    bg: '#eff6ff',
-    badge: '#1e40af',
-    accent: '#60a5fa',
-    bar: '#3b82f6',
+  violet: {
+    border: '#8b5cf6',
+    bg: '#f5f3ff',
+    badge: '#5b21b6',
+    accent: '#a78bfa',
+    bar: '#8b5cf6',
   },
   slate: {
     border: '#64748b',

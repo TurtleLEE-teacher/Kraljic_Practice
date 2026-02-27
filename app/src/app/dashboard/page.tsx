@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { DashboardData, QuadrantId, QuadrantResult, DimensionProfile, WeightedScore, Grade } from '@/lib/types';
 import { QUADRANT_META, QUADRANT_ORDER } from '@/data/quadrants';
@@ -13,6 +13,13 @@ import RadarChartComponent from '@/components/RadarChart';
 import DimensionProfileChart from '@/components/DimensionProfileChart';
 import RankTracker from '@/components/RankTracker';
 import LearningFeedback from '@/components/LearningFeedback';
+import {
+  getNotionConfig,
+  saveNotionConfig,
+  submitToNotion,
+  type NotionConfig,
+  type SubmitStatus,
+} from '@/lib/notionSubmit';
 
 /** Dimension labels in Korean */
 const DIMENSION_LABELS: Record<string, string> = {
@@ -202,6 +209,33 @@ export default function DashboardPage() {
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
+
+  // Notion submit
+  const [notionStatus, setNotionStatus] = useState<SubmitStatus>('idle');
+  const [notionMsg, setNotionMsg] = useState('');
+  const [showNotionConfig, setShowNotionConfig] = useState(false);
+  const [notionUrl, setNotionUrl] = useState(() => getNotionConfig()?.proxyUrl ?? '');
+
+  const handleNotionSubmit = useCallback(async () => {
+    const config = getNotionConfig();
+    if (!config?.proxyUrl) {
+      setShowNotionConfig(true);
+      return;
+    }
+    setNotionStatus('sending');
+    setNotionMsg('');
+    const result = await submitToNotion(data, config);
+    setNotionStatus(result.ok ? 'success' : 'error');
+    setNotionMsg(result.message);
+  }, [data]);
+
+  const handleSaveNotionConfig = useCallback(() => {
+    if (!notionUrl.trim()) return;
+    const config: NotionConfig = { proxyUrl: notionUrl.trim() };
+    saveNotionConfig(config);
+    setShowNotionConfig(false);
+    handleNotionSubmit();
+  }, [notionUrl, handleNotionSubmit]);
 
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
@@ -490,12 +524,12 @@ export default function DashboardPage() {
                 {data.eventResults.map((er) => {
                   const meta = QUADRANT_META[er.quadrant];
                   const colorHex =
-                    meta.color === 'amber'
-                      ? '#f59e0b'
+                    meta.color === 'red'
+                      ? '#ef4444'
                       : meta.color === 'emerald'
                         ? '#10b981'
-                        : meta.color === 'blue'
-                          ? '#3b82f6'
+                        : meta.color === 'violet'
+                          ? '#8b5cf6'
                           : '#64748b';
                   return (
                     <div
@@ -618,8 +652,38 @@ export default function DashboardPage() {
         <section className="mb-10 print:hidden">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
+              onClick={handleNotionSubmit}
+              disabled={notionStatus === 'sending'}
+              className={`inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-xl shadow-sm transition-colors cursor-pointer ${
+                notionStatus === 'success'
+                  ? 'bg-green-600 text-white'
+                  : notionStatus === 'error'
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-violet-600 text-white hover:bg-violet-700'
+              }`}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              {notionStatus === 'sending'
+                ? '전송 중...'
+                : notionStatus === 'success'
+                  ? '전송 완료!'
+                  : '결과 전송'}
+            </button>
+            <button
               onClick={handleRestart}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-sm hover:bg-blue-700 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-700 text-white font-semibold rounded-xl shadow-sm hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <svg
                 className="w-4 h-4"
@@ -656,6 +720,47 @@ export default function DashboardPage() {
               결과 인쇄
             </button>
           </div>
+
+          {/* Notion status message */}
+          {notionMsg && (
+            <p className={`text-center text-sm mt-3 ${notionStatus === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+              {notionMsg}
+            </p>
+          )}
+
+          {/* Notion config modal */}
+          {showNotionConfig && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+                <h3 className="text-base font-bold text-gray-900 mb-2">결과 전송 설정</h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  결과를 전송받을 웹훅 URL을 입력하세요 (Notion Proxy, Google Apps Script 등).
+                </p>
+                <input
+                  type="url"
+                  value={notionUrl}
+                  onChange={(e) => setNotionUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 transition-colors mb-4"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowNotionConfig(false)}
+                    className="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleSaveNotionConfig}
+                    disabled={!notionUrl.trim()}
+                    className="flex-1 py-2.5 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    저장 후 전송
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Footer */}

@@ -18,9 +18,9 @@ const QUADRANT_CARDS: {
   dotClass: string;
   textClass: string;
 }[] = [
-  { id: 'bottleneck', company: '한빛전자', item: '세라믹 절연체', bgClass: 'bg-amber-50 hover:bg-amber-100', borderClass: 'border-amber-200 hover:border-amber-400', dotClass: 'bg-amber-500', textClass: 'text-amber-900' },
+  { id: 'bottleneck', company: '한빛전자', item: '세라믹 절연체', bgClass: 'bg-red-50 hover:bg-red-100', borderClass: 'border-red-200 hover:border-red-400', dotClass: 'bg-red-500', textClass: 'text-red-900' },
   { id: 'leverage', company: '노바텍', item: 'MLCC 커패시터', bgClass: 'bg-emerald-50 hover:bg-emerald-100', borderClass: 'border-emerald-200 hover:border-emerald-400', dotClass: 'bg-emerald-500', textClass: 'text-emerald-900' },
-  { id: 'strategic', company: '미래모터스', item: '배터리셀', bgClass: 'bg-blue-50 hover:bg-blue-100', borderClass: 'border-blue-200 hover:border-blue-400', dotClass: 'bg-blue-500', textClass: 'text-blue-900' },
+  { id: 'strategic', company: '미래모터스', item: '배터리셀', bgClass: 'bg-violet-50 hover:bg-violet-100', borderClass: 'border-violet-200 hover:border-violet-400', dotClass: 'bg-violet-500', textClass: 'text-violet-900' },
   { id: 'noncritical', company: '대한중공업', item: 'MRO 소모품', bgClass: 'bg-slate-50 hover:bg-slate-100', borderClass: 'border-slate-200 hover:border-slate-400', dotClass: 'bg-slate-500', textClass: 'text-slate-900' },
 ];
 
