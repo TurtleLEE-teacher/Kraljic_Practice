@@ -78,32 +78,6 @@ export default function ItemsPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6">
 
-        {/* Info banner */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 flex gap-3">
-          <svg className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-xs text-amber-800 leading-relaxed">
-            각 품목의 원천 데이터(납기이력·공급업체·지출)에서 <strong>8개 KPI 인자</strong>를 직접 계산하여
-            품목군(일반·레버리지·병목·전략)을 결정하세요.
-            계산 수식 →{' '}
-            <Link href="/guide" className="underline font-semibold">KPI 가이드</Link>
-          </p>
-        </div>
-
-        {/* Legend */}
-        <div className="flex flex-wrap gap-3 mb-5">
-          {[
-            { label: '구매금액 규모', desc: '막대 길이 = 상대적 규모 (최대 52.5억)' },
-            { label: '공급업체 수', desc: '점 개수 = 등록 업체 수' },
-          ].map(l => (
-            <div key={l.label} className="flex items-center gap-1.5 text-[11px] text-gray-500">
-              <span className="font-semibold text-gray-600">{l.label}:</span>
-              {l.desc}
-            </div>
-          ))}
-        </div>
-
         {/* Item Grid */}
         <div className="grid grid-cols-1 gap-3">
           {ITEMS.map((item) => {

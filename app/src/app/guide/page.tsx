@@ -79,54 +79,54 @@ const CLASSIFICATION_TABLE = [
 const QUADRANT_KPI_MAP = [
   {
     id: 'bottleneck',
-    name: '병목', nameEn: 'Bottleneck',
-    icon: '⚠️',
-    supplyDir: '높음 ↑', profitDir: '낮음 ↓',
-    bg: 'bg-red-50', border: 'border-red-200', titleColor: 'text-red-700', subtitleColor: 'text-red-400',
+    name: '병목', nameEn: 'Bottleneck', icon: '⚠️',
+    supplyDir: '↑ 높음', profitDir: '↓ 낮음',
+    bg: 'bg-red-50', border: 'border-red-200', titleColor: 'text-red-700',
+    numCls: 'bg-red-100 text-red-700',
     signals: [
-      { num: '④', label: '공급업체 수', hint: '≤ 2개 (매우 적음)', critical: true },
-      { num: '⑥', label: '대체 가능 업체', hint: '0~1개 (전환 불가)', critical: true },
-      { num: '⑤', label: '1위 집중도', hint: '≥ 70% (독점적)', critical: true },
-      { num: '①', label: '리드타임', hint: '≥ 30일 (매우 긺)', critical: false },
+      { num: '④', label: '공급업체 수 적음' },
+      { num: '⑥', label: '대체 불가' },
+      { num: '⑤', label: '집중도 높음' },
+      { num: '①', label: '리드타임 긺' },
     ],
   },
   {
     id: 'strategic',
-    name: '전략', nameEn: 'Strategic',
-    icon: '✦',
-    supplyDir: '높음 ↑', profitDir: '높음 ↑',
-    bg: 'bg-violet-50', border: 'border-violet-200', titleColor: 'text-violet-700', subtitleColor: 'text-violet-400',
+    name: '전략', nameEn: 'Strategic', icon: '✦',
+    supplyDir: '↑ 높음', profitDir: '↑ 높음',
+    bg: 'bg-violet-50', border: 'border-violet-200', titleColor: 'text-violet-700',
+    numCls: 'bg-violet-100 text-violet-700',
     signals: [
-      { num: '⑦', label: '지출 비중', hint: '≥ 10% (핵심 지출)', critical: true },
-      { num: '④', label: '공급업체 수', hint: '≤ 3개 (적음)', critical: true },
-      { num: '⑥', label: '대체 가능 업체', hint: '0~1개 (전환 어려움)', critical: true },
-      { num: '⑤', label: '1위 집중도', hint: '≥ 60% (높음)', critical: false },
+      { num: '⑦', label: '지출비중 높음' },
+      { num: '④', label: '공급업체 수 적음' },
+      { num: '⑥', label: '대체 불가' },
+      { num: '⑤', label: '집중도 높음' },
     ],
   },
   {
     id: 'noncritical',
-    name: '일반', nameEn: 'Non-critical',
-    icon: '✓',
-    supplyDir: '낮음 ↓', profitDir: '낮음 ↓',
-    bg: 'bg-slate-50', border: 'border-slate-200', titleColor: 'text-slate-600', subtitleColor: 'text-slate-400',
+    name: '일반', nameEn: 'Non-critical', icon: '✓',
+    supplyDir: '↓ 낮음', profitDir: '↓ 낮음',
+    bg: 'bg-slate-50', border: 'border-slate-200', titleColor: 'text-slate-600',
+    numCls: 'bg-slate-200 text-slate-600',
     signals: [
-      { num: '⑦', label: '지출 비중', hint: '< 2% (미미함)', critical: true },
-      { num: '④', label: '공급업체 수', hint: '≥ 5개 (다수)', critical: true },
-      { num: '①', label: '리드타임', hint: '≤ 5일 (짧음)', critical: false },
-      { num: '②', label: '납기준수율', hint: '≥ 95% (안정)', critical: false },
+      { num: '⑦', label: '지출비중 낮음' },
+      { num: '④', label: '공급업체 많음' },
+      { num: '①', label: '리드타임 짧음' },
+      { num: '②', label: '납기준수율 높음' },
     ],
   },
   {
     id: 'leverage',
-    name: '레버리지', nameEn: 'Leverage',
-    icon: '▲',
-    supplyDir: '낮음 ↓', profitDir: '높음 ↑',
-    bg: 'bg-emerald-50', border: 'border-emerald-200', titleColor: 'text-emerald-700', subtitleColor: 'text-emerald-400',
+    name: '레버리지', nameEn: 'Leverage', icon: '▲',
+    supplyDir: '↓ 낮음', profitDir: '↑ 높음',
+    bg: 'bg-emerald-50', border: 'border-emerald-200', titleColor: 'text-emerald-700',
+    numCls: 'bg-emerald-100 text-emerald-700',
     signals: [
-      { num: '⑦', label: '지출 비중', hint: '≥ 5% (큰 구매력)', critical: true },
-      { num: '④', label: '공급업체 수', hint: '≥ 4개 (다수)', critical: true },
-      { num: '②', label: '납기준수율', hint: '≥ 90% (안정)', critical: false },
-      { num: '③', label: '리드타임 CV', hint: '< 25% (안정적)', critical: false },
+      { num: '⑦', label: '지출비중 높음' },
+      { num: '④', label: '공급업체 많음' },
+      { num: '②', label: '납기준수율 높음' },
+      { num: '③', label: 'CV 안정적' },
     ],
   },
 ];
@@ -178,75 +178,44 @@ export default function GuidePage() {
             <h2 className="text-base font-bold text-gray-900">품목군별 핵심 KPI 신호</h2>
           </div>
           <p className="text-xs text-gray-500 ml-8 mb-4">
-            각 품목군을 결정짓는 <strong>핵심 KPI</strong>를 먼저 확인하세요. 붉은 배지는 해당 품목군을 강하게 시사하는 신호입니다.
+            각 품목군의 핵심 KPI 신호를 먼저 파악하세요.
           </p>
 
-          {/* 2×2 Axis labels */}
-          <div className="relative">
-            {/* Y axis label */}
-            <div className="flex items-center gap-2 mb-2 ml-1">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <span className="text-[11px] font-semibold text-red-600">공급위험(Supply Risk) 축</span>
-              </div>
-              <span className="text-[11px] text-gray-400">위 ↑ = 높음 / 아래 ↓ = 낮음</span>
-            </div>
-            <div className="flex items-center gap-2 mb-3 ml-1">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-emerald-400" />
-                <span className="text-[11px] font-semibold text-emerald-600">수익영향(Profit Impact) 축</span>
-              </div>
-              <span className="text-[11px] text-gray-400">좌 ← = 낮음 / 우 → = 높음</span>
-            </div>
+          {/* Axis hint row */}
+          <div className="flex justify-between text-[10px] text-gray-400 px-1 mb-1.5">
+            <span>← 수익영향 낮음 · · · 수익영향 높음 →</span>
+          </div>
 
-            {/* 2x2 Grid */}
-            <div className="grid grid-cols-2 gap-2">
-              {QUADRANT_KPI_MAP.map(q => (
-                <div key={q.id} className={`${q.bg} ${q.border} border rounded-xl p-3`}>
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-base">{q.icon}</span>
-                        <span className={`text-sm font-bold ${q.titleColor}`}>{q.name}</span>
-                      </div>
-                      <p className={`text-[10px] ${q.subtitleColor} mt-0.5`}>{q.nameEn}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] text-gray-400">공급위험 <span className="font-semibold text-gray-600">{q.supplyDir}</span></p>
-                      <p className="text-[9px] text-gray-400">수익영향 <span className="font-semibold text-gray-600">{q.profitDir}</span></p>
-                    </div>
-                  </div>
-
-                  {/* KPI Signal list */}
-                  <div className="space-y-1">
-                    {q.signals.map(sig => (
-                      <div key={sig.num} className="flex items-start gap-1.5">
-                        <span className={`shrink-0 mt-0.5 text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full ${
-                          q.id === 'leverage' || q.id === 'noncritical'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-red-100 text-red-700'
-                        }`}>{sig.num}</span>
-                        <div className="min-w-0">
-                          <span className="text-[11px] font-semibold text-gray-700">{sig.label}</span>
-                          {sig.critical && (
-                            <span className={`ml-1 text-[9px] font-bold px-1 py-0.5 rounded ${q.titleColor} ${q.bg}`}>핵심</span>
-                          )}
-                          <p className="text-[10px] text-gray-500">{sig.hint}</p>
-                        </div>
-                      </div>
-                    ))}
+          {/* 2x2 Grid */}
+          <div className="grid grid-cols-2 gap-2">
+            {QUADRANT_KPI_MAP.map(q => (
+              <div key={q.id} className={`${q.bg} ${q.border} border rounded-xl p-3`}>
+                {/* Header */}
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <span>{q.icon}</span>
+                  <div>
+                    <p className={`text-xs font-bold leading-none ${q.titleColor}`}>{q.name}</p>
+                    <p className="text-[9px] text-gray-400 mt-0.5">
+                      공급 {q.supplyDir} / 수익 {q.profitDir}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Axis arrows overlay hint */}
-            <div className="flex justify-between mt-2 px-1">
-              <span className="text-[10px] text-gray-400">← 수익영향 낮음</span>
-              <span className="text-[10px] text-gray-400">수익영향 높음 →</span>
-            </div>
+                {/* KPI badges */}
+                <div className="flex flex-wrap gap-1">
+                  {q.signals.map(sig => (
+                    <span
+                      key={sig.num}
+                      className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${q.border} ${q.bg}`}
+                    >
+                      <span className={`text-[9px] font-black w-3.5 h-3.5 flex items-center justify-center rounded-full ${q.numCls}`}>{sig.num}</span>
+                      {sig.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
+          <p className="text-[10px] text-gray-400 text-center mt-2">↑ 공급위험 높음 (위 행) / ↓ 공급위험 낮음 (아래 행)</p>
         </section>
 
         {/* ════════════════════════════════════

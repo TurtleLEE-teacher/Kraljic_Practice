@@ -1,94 +1,59 @@
-# Kraljic Matrix Practice Simulation
+# Kraljic Matrix Practice
 
-Kraljic 매트릭스 기반 구매전략 의사결정 시뮬레이션 — 품목군별 실습 플랫폼
+크랄직 매트릭스 기반 **품목군 분류 실습 사이트**
 
 **[Live Demo](https://turtlelee-teacher.github.io/Kraljic_Practice/)**
 
-## Overview
+---
 
-구매/조달 전문가를 위한 인터랙티브 학습 시뮬레이션입니다. Kraljic 매트릭스의 4개 사분면(병목, 레버리지, 전략, 비핵심)에 대해 실제 산업 시나리오를 기반으로 의사결정을 연습하고, 돌발 이벤트 대응까지 경험합니다.
+## 실습 개요
 
-## Architecture
-
-### 2-Layer Structure
+10개 품목(A~J)의 **원천 데이터**를 분석해 각 품목을 크랄직 매트릭스의 4개 품목군으로 분류하는 실습입니다.
 
 ```
-Layer 1: Individual Scenario (4 Quadrants × 4 Steps × 3 Choices)
-  ├── Bottleneck  — 한빛전자 / 세라믹 절연체
-  ├── Leverage    — 노바텍 / MLCC 커패시터
-  ├── Strategic   — 미래모터스 / 차세대 배터리셀
-  └── Non-critical — 대한중공업 / MRO 소모품
-
-Layer 2: Event Response (공통 위기 시나리오)
-  └── 동아시아 공급망 복합 위기 (항만 파업 + 수출 규제 + 공장 화재)
+원천 데이터 확인 → KPI 직접 계산 → 품목군 분류 → Tally 폼 제출
 ```
 
-### Scoring System
+### 품목군 (4개 사분면)
 
-| Dimension | Description | Range |
-|-----------|-------------|-------|
-| CE (Cost Efficiency) | 단기 재무 성과 | 1-5 |
-| SS (Supply Stability) | 공급 안정성/리스크 관리 | 1-5 |
-| SV (Strategic Value) | 장기 경쟁우위 구축 | 1-5 |
+| 품목군 | 공급위험 | 수익영향 |
+|--------|---------|---------|
+| 병목 (Bottleneck) | 높음 | 낮음 |
+| 전략 (Strategic)  | 높음 | 높음 |
+| 일반 (Non-critical) | 낮음 | 낮음 |
+| 레버리지 (Leverage) | 낮음 | 높음 |
 
-**Quadrant-Specific Weights:**
+### 산출 KPI 인자 (7개)
 
-| Quadrant | CE | SS | SV | Core Dilemma |
-|----------|------|------|------|-------------|
-| Bottleneck | 0.20 | 0.50 | 0.30 | 저비용 품목에 얼마나 투자할 것인가 |
-| Leverage | 0.50 | 0.20 | 0.30 | 공격적 원가 절감 vs 공급사 관계 |
-| Strategic | 0.20 | 0.30 | 0.50 | 파트너십 심화 vs 종속 회피 |
-| Non-critical | 0.50 | 0.15 | 0.35 | 관리 효율화 vs 방치 위험 |
+**공급위험 축 (Supply Risk)**
+- ① 평균 납기 리드타임 (일) — 납기이력 테이블
+- ② 납기준수율 (%) — 납기이력 테이블
+- ③ 리드타임 변동계수 CV (%) — 납기이력 테이블
+- ④ 등록 공급업체 수 (개) — 공급업체 현황 테이블
+- ⑤ 1위 공급업체 집중도 (%) — 공급업체 현황 테이블
+- ⑥ 대체 가능 업체 수 (개) — 공급업체 현황 테이블
 
-### Score Distribution
+**수익영향 축 (Profit Impact)**
+- ⑦ 지출 비중 (%) — 구매 지출 현황 테이블
 
-- Layer 1 (4 quadrants): ~16–80 points (realistic range: 45–65)
-- Layer 2 (event): max 20 points (realistic range: 10–16)
-- Total: max 100 points (realistic max: ~78)
+---
 
-## Design Documents
+## 사이트 구조
 
-| # | Document | Description |
-|---|----------|-------------|
-| 01 | [Common Framework](docs/01_common_framework.md) | 전체 구조, 스코어링, 대시보드 설계 |
-| 02 | [Bottleneck Scenario](docs/02_scenario_bottleneck.md) | 한빛전자 세라믹 절연체 시나리오 |
-| 03 | [Leverage Scenario](docs/03_scenario_leverage.md) | 노바텍 MLCC 커패시터 시나리오 |
-| 04 | [Strategic Scenario](docs/04_scenario_strategic.md) | 미래모터스 배터리셀 시나리오 |
-| 05 | [Non-critical Scenario](docs/05_scenario_noncritical.md) | 대한중공업 MRO 소모품 시나리오 |
-| 06 | [Event Scenario](docs/06_event_scenario.md) | 돌발 이벤트 + 역전 로직 설계 |
-| 07 | [Integration Verification](docs/07_integration_verification.md) | 통합 검증 및 밸런스 확인 |
+```
+/           랜딩 — 실습 개요 + 진행 단계
+/guide      KPI 가이드 — 계산 공식 + 보조 계산기 + 분류 기준표
+/items      품목 목록 — 10개 품목 요약
+/items/[id] 품목 상세 — 3종 원천 데이터 테이블 (납기이력 / 공급업체 / 지출)
+```
 
-## Key Features
-
-- **48 Decision Points**: 4 quadrants × 4 steps × 3 choices, no branching
-- **Immediate Feedback**: 결과 → 트레이드오프 → 이론 연결 (매 선택 후)
-- **Event Reversal**: Layer 2에서 최대 ~8.6점 역전 가능 (긴장감 유지)
-- **No Perfect Choice**: 모든 선택에 CE/SS/SV 트레이드오프 존재
-- **Comprehensive Dashboard**: 레이더 차트, 사분면별 분석, 순위 변동 추적
+---
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router) + TypeScript
+- **Framework**: Next.js 16 (App Router, Static Export) + TypeScript
 - **Styling**: Tailwind CSS v4
-- **State**: Zustand (with localStorage persist)
-- **Charts**: Recharts (Radar, Bar)
-- **Database**: SQLite (better-sqlite3) + Drizzle ORM
-- **Runtime**: Node.js 20+
-
-## Development Status
-
-- [x] Common Framework Design
-- [x] Bottleneck Scenario Design
-- [x] Leverage Scenario Design
-- [x] Strategic Scenario Design
-- [x] Non-critical Scenario Design
-- [x] Event & Reversal Logic Design
-- [x] Integration Verification
-- [x] Frontend Implementation (4 pages, 13 components)
-- [x] Backend / Scoring Engine (6 functions + 4 API routes)
-- [x] Database & State Management (SQLite + Zustand persist)
-- [x] Dashboard & Visualization (ScoreGauge, RadarChart, RankTracker)
-- [ ] Testing & QA
+- **Data**: 정적 데이터 (`src/data/items.ts`) — 10개 품목 × 3종 테이블
 
 ## Getting Started
 
@@ -96,4 +61,12 @@ Layer 2: Event Response (공통 위기 시나리오)
 cd app
 npm install
 npm run dev    # http://localhost:3000
+npm run build  # 정적 빌드
 ```
+
+---
+
+## 브랜치 전략
+
+- `main` — 안정 배포본
+- `claude/redesign-product-kpi-site-VREBS` — 현재 개발 브랜치
