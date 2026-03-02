@@ -67,12 +67,15 @@ export default function ItemsPage() {
             <span className="text-sm font-bold text-gray-900">10개 품목 원천 데이터</span>
             <span className="text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">품목 A ~ J</span>
           </div>
-          <Link href="/guide" className="text-xs text-slate-600 hover:text-slate-900 font-semibold flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            가이드
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/guide" className="text-xs text-slate-600 hover:text-slate-900 font-semibold whitespace-nowrap">
+              가이드
+            </Link>
+            <span className="text-gray-200">|</span>
+            <Link href="/survey" className="text-xs text-emerald-600 hover:text-emerald-800 font-bold whitespace-nowrap">
+              📝 제출
+            </Link>
+          </div>
         </div>
       </div>
 

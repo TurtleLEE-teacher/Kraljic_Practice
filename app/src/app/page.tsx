@@ -2,10 +2,10 @@ import Link from 'next/link';
 import KraljicMatrixDiagram from '@/components/KraljicMatrixDiagram';
 
 const STEPS = [
-  { icon: '📋', label: '데이터 확인' },
+  { icon: '📊', label: '데이터 확인' },
   { icon: '🧮', label: 'KPI 계산' },
   { icon: '🎯', label: '품목군 분류' },
-  { icon: '✅', label: 'Tally 제출', dim: true },
+  { icon: '📝', label: '결과 제출' },
 ];
 
 export default function LandingPage() {
@@ -26,16 +26,14 @@ export default function LandingPage() {
         </p>
 
         {/* 4-step strip */}
-        <div className="flex items-center justify-center gap-1 mt-5">
+        <div className="flex items-center justify-center gap-1 mt-5 overflow-x-auto px-2">
           {STEPS.map((s, i) => (
             <div key={s.label} className="flex items-center gap-1">
-              <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${s.dim ? 'bg-slate-800/40' : 'bg-slate-700'}`}>
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-700">
                 <span className="text-sm">{s.icon}</span>
-                <span className={`text-[11px] font-semibold ${s.dim ? 'text-slate-500' : 'text-slate-200'}`}>{s.label}</span>
+                <span className="text-[11px] font-semibold text-slate-200">{s.label}</span>
               </div>
-              {i < STEPS.length - 1 && (
-                <span className="text-slate-600 text-xs">›</span>
-              )}
+              {i < STEPS.length - 1 && <span className="text-slate-600 text-xs">›</span>}
             </div>
           ))}
         </div>
@@ -67,12 +65,18 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* ── Tally notice ── */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-center">
-          <p className="text-xs text-amber-800">
-            분류 완료 후 → <strong>진행자가 안내하는 Tally 폼</strong>에 품목 A~J 결과를 제출하세요
-          </p>
-        </div>
+        {/* ── Survey CTA ── */}
+        <Link
+          href="/survey"
+          className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white border-2 border-dashed border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/30 transition-all group"
+        >
+          <span className="text-3xl shrink-0">📝</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-800 group-hover:text-emerald-700 whitespace-nowrap">분류 결과 제출</p>
+            <p className="text-xs text-gray-400 whitespace-nowrap">10개 품목 품목군 선택 + 근거 입력</p>
+          </div>
+          <span className="text-gray-300 group-hover:text-emerald-500 text-lg shrink-0">→</span>
+        </Link>
 
         {/* ── KPI quick tags ── */}
         <div className="bg-white rounded-xl border border-gray-100 px-4 py-3.5">
