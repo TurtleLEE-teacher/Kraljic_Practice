@@ -1,196 +1,134 @@
-'use client';
+import Link from 'next/link';
+import KraljicMatrixDiagram from '@/components/KraljicMatrixDiagram';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useGameStore } from '@/store/gameStore';
-import { QUADRANT_META, QUADRANT_ORDER } from '@/data/quadrants';
-import type { QuadrantId } from '@/lib/types';
-import InventoryCalculator from '@/components/InventoryCalculator';
+const KPI_FACTORS = [
+  {
+    axis: '수익영향',
+    color: 'emerald',
+    factors: [
+      { name: '연간 구매금액', source: '지출 데이터', calc: '직접 읽기' },
+      { name: '지출 비중(%)', source: '지출 데이터', calc: '품목금액 ÷ 전사총액 × 100' },
+    ],
+  },
+  {
+    axis: '공급위험',
+    color: 'red',
+    factors: [
+      { name: '등록 공급업체 수', source: '공급업체 데이터', calc: '업체 행 수 카운트' },
+      { name: '1위 공급업체 집중도(%)', source: '공급업체 데이터', calc: '최대 거래업체 ÷ 합계 × 100' },
+      { name: '대체 가능 업체 수', source: '공급업체 데이터', calc: "'Y' 행 카운트" },
+      { name: '평균 납기 리드타임(일)', source: '납기 데이터', calc: 'Σ(입고일-발주일) ÷ 건수' },
+      { name: '납기준수율(%)', source: '납기 데이터', calc: '(입고일≤납기예정일 건수) ÷ 전체 × 100' },
+      { name: '리드타임 변동계수(CV%)', source: '납기 데이터', calc: '표준편차 ÷ 평균 × 100' },
+    ],
+  },
+];
 
-type LandingTab = 'simulation' | 'calculator';
-
-const QUADRANT_CARDS: {
-  id: QuadrantId;
-  company: string;
-  item: string;
-  bgClass: string;
-  borderClass: string;
-  dotClass: string;
-  textClass: string;
-}[] = [
-  { id: 'bottleneck', company: '한빛전자', item: '세라믹 절연체', bgClass: 'bg-red-50 hover:bg-red-100', borderClass: 'border-red-200 hover:border-red-400', dotClass: 'bg-red-500', textClass: 'text-red-900' },
-  { id: 'leverage', company: '노바텍', item: 'MLCC 커패시터', bgClass: 'bg-emerald-50 hover:bg-emerald-100', borderClass: 'border-emerald-200 hover:border-emerald-400', dotClass: 'bg-emerald-500', textClass: 'text-emerald-900' },
-  { id: 'strategic', company: '미래모터스', item: '배터리셀', bgClass: 'bg-violet-50 hover:bg-violet-100', borderClass: 'border-violet-200 hover:border-violet-400', dotClass: 'bg-violet-500', textClass: 'text-violet-900' },
-  { id: 'noncritical', company: '대한중공업', item: 'MRO 소모품', bgClass: 'bg-slate-50 hover:bg-slate-100', borderClass: 'border-slate-200 hover:border-slate-400', dotClass: 'bg-slate-500', textClass: 'text-slate-900' },
+const STEPS = [
+  { step: '01', title: '원천 데이터 확인', desc: '품목별 납기이력·공급업체·지출 데이터 3종 테이블을 검토합니다.' },
+  { step: '02', title: 'KPI 직접 산출', desc: '8개 정량 인자를 수식에 따라 계산합니다. 계산기나 엑셀을 활용하세요.' },
+  { step: '03', title: '품목군 분류 판단', desc: '가이드 기준표를 참고하여 각 품목이 4개 사분면 중 어디에 속하는지 결정합니다.' },
+  { step: '04', title: 'Tally 폼 제출', desc: '품목 A~J의 분류 결과와 판단 근거를 팀별로 제출합니다.' },
 ];
 
 export default function LandingPage() {
-  const [activeTab, setActiveTab] = useState<LandingTab>('simulation');
-  const [name, setName] = useState('');
-  const store = useGameStore();
-  const router = useRouter();
-
-  const completedQuadrants = QUADRANT_ORDER.filter((qId) => {
-    return store.submissions.filter((s) => s.quadrant === qId).length >= 4;
-  });
-
-  const handleQuadrantClick = (qId: QuadrantId) => {
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
-
-    if (!store.sessionId) {
-      store.startSession(trimmedName);
-    }
-
-    router.push(`/scenario/${qId}/1`);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 px-6 py-6 text-center">
-            <h1 className="text-xl font-bold text-white">
-              Kraljic 매트릭스 워크샵
-            </h1>
-            <p className="text-slate-400 text-xs mt-1">전략구매 의사결정 실습 + 품목군 맞추기 게임</p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
+      <div className="max-w-2xl mx-auto px-4 py-8">
 
-          {/* Tab nav */}
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('simulation')}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-colors cursor-pointer ${
-                activeTab === 'simulation'
-                  ? 'text-slate-800 border-b-2 border-slate-800 bg-white'
-                  : 'text-gray-400 hover:text-gray-600 bg-gray-50'
-              }`}
-            >
-              워크샵
-            </button>
-            <button
-              onClick={() => setActiveTab('calculator')}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-colors cursor-pointer ${
-                activeTab === 'calculator'
-                  ? 'text-blue-700 border-b-2 border-blue-600 bg-white'
-                  : 'text-gray-400 hover:text-gray-600 bg-gray-50'
-              }`}
-            >
-              재고 계산기
-            </button>
-          </div>
-
-          {/* ===== Simulation Tab ===== */}
-          {activeTab === 'simulation' && (
-            <div className="px-6 py-5">
-              {/* Name input */}
-              <div className="mb-5">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="이름 (또는 팀명) 입력"
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm
-                             focus:outline-none focus:border-blue-500
-                             placeholder:text-gray-400 transition-colors"
-                  autoFocus
-                />
-              </div>
-
-              {/* Quadrant selection */}
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                사분면을 선택하세요
-              </p>
-
-              <div className="grid grid-cols-1 gap-2.5">
-                {QUADRANT_CARDS.map((card) => {
-                  const meta = QUADRANT_META[card.id];
-                  const isCompleted = completedQuadrants.includes(card.id);
-                  const disabled = !name.trim();
-
-                  return (
-                    <button
-                      key={card.id}
-                      onClick={() => handleQuadrantClick(card.id)}
-                      disabled={disabled}
-                      className={`
-                        relative w-full text-left px-4 py-3.5 rounded-xl border-2 transition-all duration-150
-                        ${disabled
-                          ? 'bg-gray-50 border-gray-200 opacity-50 cursor-not-allowed'
-                          : `${card.bgClass} ${card.borderClass} cursor-pointer active:scale-[0.98]`
-                        }
-                      `}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-3 h-3 rounded-full ${disabled ? 'bg-gray-300' : card.dotClass}`} />
-                          <div>
-                            <div className={`text-sm font-bold ${disabled ? 'text-gray-400' : card.textClass}`}>
-                              {meta.nameKo}
-                              <span className="text-[10px] font-normal text-gray-400 ml-1.5">{meta.nameEn}</span>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-0.5">
-                              {card.company} &middot; {card.item}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {isCompleted && (
-                            <span className="text-[10px] font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
-                              완료
-                            </span>
-                          )}
-                          <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Progress + result link */}
-              {completedQuadrants.length > 0 && (
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
-                    {completedQuadrants.length}개 완료
-                  </span>
-                  <button
-                    onClick={() => router.push('/dashboard')}
-                    className="text-xs font-semibold text-violet-600 hover:text-violet-800 cursor-pointer"
-                  >
-                    최근 결과 보기 &rarr;
-                  </button>
-                </div>
-              )}
-
-              {/* Team tip */}
-              <div className="mt-4 bg-slate-50 rounded-lg px-4 py-3">
-                <p className="text-[11px] text-gray-500 leading-relaxed">
-                  <strong className="text-gray-700">게임 진행:</strong>{' '}
-                  각자 사분면을 하나씩 맡아 4단계 의사결정을 완료하면, 품목군 이름이 가려진 결과 화면이 나옵니다.
-                  다른 참가자들이 어떤 품목군인지 맞추고, 맞추면 발표자가 간단히 설명합니다. 점수가 높은 사람이 승리!
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ===== Calculator Tab ===== */}
-          {activeTab === 'calculator' && (
-            <div className="p-4">
-              <InventoryCalculator />
-            </div>
-          )}
+        {/* Header */}
+        <div className="text-center mb-8">
+          <span className="inline-block text-xs font-semibold text-blue-600 bg-blue-100 px-3 py-1 rounded-full mb-3 tracking-wider uppercase">
+            Kraljic Matrix Practice
+          </span>
+          <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+            크랄직 매트릭스<br />
+            <span className="text-slate-600">품목군 분류 실습</span>
+          </h1>
+          <p className="text-sm text-gray-500 mt-3 leading-relaxed">
+            원천 데이터에서 KPI를 직접 산출하고<br />
+            10개 품목의 크랄직 품목군을 분류하는 실습입니다.
+          </p>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-4">
-          {activeTab === 'simulation'
-            ? '사분면 선택 → 4단계 의사결정 → 품목군 맞추기 → 발표'
-            : 'EOQ · Safety Stock · Reorder Point'}
-        </p>
+        {/* Kraljic Matrix Diagram */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+          <h2 className="text-sm font-bold text-gray-700 mb-4">크랄직 매트릭스 (Kraljic, 1983)</h2>
+          <KraljicMatrixDiagram />
+        </div>
+
+        {/* MECE KPI Factors */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+          <h2 className="text-sm font-bold text-gray-700 mb-1">분류 기준 — 8개 정량 인자 (MECE)</h2>
+          <p className="text-xs text-gray-400 mb-4">원천 데이터로부터 아래 인자를 산출하여 품목군을 결정합니다.</p>
+          <div className="space-y-4">
+            {KPI_FACTORS.map((group) => (
+              <div key={group.axis}>
+                <div className={`inline-block text-xs font-bold px-2 py-0.5 rounded mb-2 ${
+                  group.color === 'emerald' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                }`}>
+                  {group.axis} 축
+                </div>
+                <div className="space-y-1.5">
+                  {group.factors.map((f) => (
+                    <div key={f.name} className="flex items-start gap-2 pl-1">
+                      <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+                        group.color === 'emerald' ? 'bg-emerald-400' : 'bg-red-400'
+                      }`} />
+                      <div>
+                        <span className="text-xs font-semibold text-gray-700">{f.name}</span>
+                        <span className="text-[11px] text-gray-400 ml-1.5">← {f.source}</span>
+                        <p className="text-[11px] text-gray-500 font-mono">{f.calc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Steps */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+          <h2 className="text-sm font-bold text-gray-700 mb-4">실습 진행 순서</h2>
+          <div className="space-y-3">
+            {STEPS.map((s, i) => (
+              <div key={s.step} className="flex gap-3 items-start">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                  i < 3 ? 'bg-slate-800 text-white' : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {s.step}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">{s.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-gray-400 mt-3 pl-10">※ 4번(Tally 제출)은 진행자가 별도 안내합니다.</p>
+        </div>
+
+        {/* Nav buttons */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/guide"
+            className="flex flex-col items-center py-4 px-3 rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition-colors"
+          >
+            <span className="text-lg mb-1">📐</span>
+            <span className="text-sm font-bold">KPI 가이드</span>
+            <span className="text-[11px] text-slate-400 mt-0.5">계산 방법 + 기준표</span>
+          </Link>
+          <Link
+            href="/items"
+            className="flex flex-col items-center py-4 px-3 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+          >
+            <span className="text-lg mb-1">📊</span>
+            <span className="text-sm font-bold">품목 데이터</span>
+            <span className="text-[11px] text-emerald-200 mt-0.5">10개 품목 원천 데이터</span>
+          </Link>
+        </div>
+
       </div>
     </div>
   );
