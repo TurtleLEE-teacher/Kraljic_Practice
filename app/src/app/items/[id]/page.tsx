@@ -107,26 +107,33 @@ export default async function ItemDetailPage({ params }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-base">{catIcon}</span>
-            <span className="text-sm font-bold text-gray-900">{item.label}</span>
-            <span className="text-xs text-gray-400">— {item.category}</span>
+          <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+            <span className="text-base shrink-0">{catIcon}</span>
+            <span className="text-sm font-bold text-gray-900 whitespace-nowrap truncate">{item.label}</span>
           </div>
-          {/* Item navigation dots */}
-          <div className="ml-auto flex gap-1">
-            {ITEMS.map((it) => (
-              <Link
-                key={it.id}
-                href={`/items/${it.id}`}
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-colors ${
-                  it.id === id
-                    ? 'bg-slate-800 text-white'
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                }`}
-              >
-                {it.id.toUpperCase()}
-              </Link>
-            ))}
+          {/* Item nav pills + survey link */}
+          <div className="ml-auto flex items-center gap-2 shrink-0">
+            <div className="flex gap-1 overflow-x-auto max-w-[140px]">
+              {ITEMS.map((it) => (
+                <Link
+                  key={it.id}
+                  href={`/items/${it.id}`}
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black transition-colors shrink-0 ${
+                    it.id === id
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                  }`}
+                >
+                  {it.id.toUpperCase()}
+                </Link>
+              ))}
+            </div>
+            <Link
+              href="/survey"
+              className="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 whitespace-nowrap border border-emerald-200 bg-emerald-50 px-2 py-1 rounded-lg"
+            >
+              📝 제출
+            </Link>
           </div>
         </div>
       </div>

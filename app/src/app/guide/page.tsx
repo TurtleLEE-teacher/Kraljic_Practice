@@ -413,12 +413,20 @@ export default function GuidePage() {
         </section>
 
         {/* ── CTA ── */}
-        <Link
-          href="/items"
-          className="block w-full text-center py-3.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
-        >
-          품목 데이터 분석 시작 →
-        </Link>
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/items"
+            className="block text-center py-3.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
+          >
+            📊 품목 데이터 →
+          </Link>
+          <Link
+            href="/survey"
+            className="block text-center py-3.5 rounded-xl bg-slate-800 text-white text-sm font-bold hover:bg-slate-700 transition-colors shadow-sm"
+          >
+            📝 분류 제출 →
+          </Link>
+        </div>
 
       </div>
     </div>
