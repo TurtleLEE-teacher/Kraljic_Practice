@@ -5,6 +5,8 @@ const KPI_GUIDE = [
   {
     id: 'lead-time',
     name: '평균 납기 리드타임',
+    icon: '⏱️',
+    num: '①',
     axis: '공급위험',
     axisColor: 'red',
     source: '납기 이력 테이블',
@@ -15,6 +17,8 @@ const KPI_GUIDE = [
   {
     id: 'otd',
     name: '납기준수율',
+    icon: '✅',
+    num: '②',
     axis: '공급위험',
     axisColor: 'red',
     source: '납기 이력 테이블',
@@ -25,6 +29,8 @@ const KPI_GUIDE = [
   {
     id: 'cv',
     name: '리드타임 변동계수(CV)',
+    icon: '📊',
+    num: '③',
     axis: '공급위험',
     axisColor: 'red',
     source: '납기 이력 테이블',
@@ -35,6 +41,8 @@ const KPI_GUIDE = [
   {
     id: 'supplier-count',
     name: '등록 공급업체 수',
+    icon: '🏭',
+    num: '④',
     axis: '공급위험',
     axisColor: 'red',
     source: '공급업체 현황 테이블',
@@ -45,6 +53,8 @@ const KPI_GUIDE = [
   {
     id: 'concentration',
     name: '1위 공급업체 집중도',
+    icon: '📍',
+    num: '⑤',
     axis: '공급위험',
     axisColor: 'red',
     source: '공급업체 현황 테이블',
@@ -55,6 +65,8 @@ const KPI_GUIDE = [
   {
     id: 'substitutable',
     name: '대체 가능 업체 수',
+    icon: '🔄',
+    num: '⑥',
     axis: '공급위험',
     axisColor: 'red',
     source: '공급업체 현황 테이블',
@@ -65,6 +77,8 @@ const KPI_GUIDE = [
   {
     id: 'spend',
     name: '지출 비중',
+    icon: '💰',
+    num: '⑦⑧',
     axis: '수익영향',
     axisColor: 'emerald',
     source: '구매 지출 현황 테이블',
@@ -159,7 +173,13 @@ export default function GuidePage() {
               <div className={`px-4 py-2.5 flex items-center justify-between ${
                 kpi.axisColor === 'red' ? 'bg-red-50 border-b border-red-100' : 'bg-emerald-50 border-b border-emerald-100'
               }`}>
-                <h3 className="text-sm font-bold text-gray-800">{kpi.name}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg leading-none">{kpi.icon}</span>
+                  <span className={`text-[11px] font-black w-5 h-5 flex items-center justify-center rounded-full ${
+                    kpi.axisColor === 'red' ? 'bg-red-200 text-red-800' : 'bg-emerald-200 text-emerald-800'
+                  }`}>{kpi.num}</span>
+                  <h3 className="text-sm font-bold text-gray-800">{kpi.name}</h3>
+                </div>
                 <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
                   kpi.axisColor === 'red' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
                 }`}>
