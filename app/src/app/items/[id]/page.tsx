@@ -175,39 +175,17 @@ export default async function ItemDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* KPI Task map */}
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 mb-5">
-          <div className="flex items-center gap-2 mb-4">
-            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-            <p className="text-sm font-bold text-white">산출해야 할 KPI 인자 8개</p>
-          </div>
-          <div className="grid grid-cols-1 gap-2">
-            {TABLE_META.map((tm) => (
-              <div key={tm.num} className="bg-white/10 rounded-xl p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="bg-white/20 rounded-lg p-1">{tm.icon}</div>
-                  <span className="text-xs font-bold text-white">테이블 {tm.num} — {tm.title}</span>
-                  <span className="text-[10px] text-slate-400 ml-auto">{tm.desc}</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {tm.kpis.map((kpi) => (
-                    <span key={kpi} className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${tm.kpiColor}`}>
-                      {kpi}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="text-[11px] text-slate-500 mt-3 flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            계산 수식 →{' '}
-            <Link href="/guide" className="text-blue-400 underline font-semibold">KPI 가이드</Link>
+        {/* KPI 계산 안내 */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5 flex items-center justify-between gap-3">
+          <p className="text-xs text-blue-800">
+            아래 3개 테이블에서 <strong>7개 KPI 인자</strong>를 직접 계산하세요
           </p>
+          <Link
+            href="/guide"
+            className="shrink-0 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            🧮 계산기 →
+          </Link>
         </div>
 
         {/* Table 1: 납기 이력 */}
@@ -283,40 +261,6 @@ export default async function ItemDetailPage({ params }: Props) {
             rows={spendRows}
             note="지출비중(%) = 품목 구매금액 ÷ 전사 총 구매금액 × 100"
           />
-        </div>
-
-        {/* Analysis memo grid */}
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-            <h3 className="text-sm font-bold text-slate-700">분석 메모 (8개 KPI)</h3>
-            <span className="text-[10px] text-slate-400 ml-auto">종이 또는 엑셀에 직접 기록하세요</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: '① 평균 리드타임', unit: '일', icon: '⏱', color: 'border-blue-200' },
-              { label: '② 납기준수율', unit: '%', icon: '✅', color: 'border-blue-200' },
-              { label: '③ 리드타임 CV', unit: '%', icon: '📊', color: 'border-blue-200' },
-              { label: '④ 공급업체 수', unit: '개', icon: '🏭', color: 'border-orange-200' },
-              { label: '⑤ 1위 집중도', unit: '%', icon: '📍', color: 'border-orange-200' },
-              { label: '⑥ 대체가능 업체', unit: '개', icon: '🔄', color: 'border-orange-200' },
-              { label: '⑦ 구매금액(2024)', unit: '억원', icon: '💰', color: 'border-emerald-200' },
-              { label: '⑧ 지출 비중', unit: '%', icon: '📈', color: 'border-emerald-200' },
-            ].map((field) => (
-              <div key={field.label} className={`bg-white rounded-xl p-2.5 border ${field.color}`}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-sm">{field.icon}</span>
-                  <p className="text-[10px] text-slate-500 font-semibold">{field.label}</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="flex-1 h-5 bg-slate-100 rounded-md" />
-                  <span className="text-[10px] text-slate-400 shrink-0">{field.unit}</span>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Prev / Next navigation */}
