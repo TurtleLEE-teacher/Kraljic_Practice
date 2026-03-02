@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kraljic 매트릭스 의사결정 시뮬레이션",
+  title: "크랄직 매트릭스 품목군 분류 실습",
   description:
-    "Kraljic 매트릭스 기반 구매 전략 의사결정 실습 시뮬레이션 — 4개 사분면 시나리오를 통해 전략적 구매 역량을 개발합니다.",
+    "원천 데이터(납기이력·공급업체·지출현황)에서 KPI를 직접 산출하여 10개 품목을 크랄직 4개 품목군으로 분류하는 실습 과정",
 };
 
 export default function RootLayout({
