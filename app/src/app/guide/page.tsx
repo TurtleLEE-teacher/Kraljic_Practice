@@ -1,86 +1,63 @@
 import Link from 'next/link';
+import KpiCalculator from '@/components/KpiCalculator';
 import InventoryCalculator from '@/components/InventoryCalculator';
+
+/* ─────────────────────────────────────────
+   데이터 정의
+───────────────────────────────────────── */
 
 const KPI_GUIDE = [
   {
-    id: 'lead-time',
+    id: 'lead-time', icon: '⏱️', num: '①', axis: '공급위험', axisColor: 'red',
     name: '평균 납기 리드타임',
-    icon: '⏱️',
-    num: '①',
-    axis: '공급위험',
-    axisColor: 'red',
     source: '납기 이력 테이블',
     formula: '리드타임(일) = 실제입고일 − 발주일\n평균 = Σ 리드타임 ÷ 발주 건수',
     example: '발주일: 2024-01-05 / 입고일: 2024-01-12\n→ 리드타임 = 7일\n12건 평균 = Σ(7+8+6+…) ÷ 12',
     interpretation: '짧을수록(≤5일) 공급위험 낮음. 길수록(≥30일) 공급위험 높음.',
   },
   {
-    id: 'otd',
+    id: 'otd', icon: '✅', num: '②', axis: '공급위험', axisColor: 'red',
     name: '납기준수율',
-    icon: '✅',
-    num: '②',
-    axis: '공급위험',
-    axisColor: 'red',
     source: '납기 이력 테이블',
     formula: '납기준수 여부 = 실제입고일 ≤ 납기예정일 이면 ○\n납기준수율(%) = (○ 건수 ÷ 전체 건수) × 100',
     example: '12건 중 11건 준수 → 11 ÷ 12 × 100 = 91.7%',
     interpretation: '높을수록(≥95%) 공급위험 낮음. 낮을수록(<80%) 공급위험 높음.',
   },
   {
-    id: 'cv',
+    id: 'cv', icon: '📊', num: '③', axis: '공급위험', axisColor: 'red',
     name: '리드타임 변동계수(CV)',
-    icon: '📊',
-    num: '③',
-    axis: '공급위험',
-    axisColor: 'red',
     source: '납기 이력 테이블',
     formula: '표준편차(σ) = √[Σ(리드타임 - 평균)² ÷ N]\nCV(%) = σ ÷ 평균 × 100',
     example: '평균 리드타임 7일, σ = 0.9일\n→ CV = 0.9 ÷ 7 × 100 = 12.9%',
     interpretation: '낮을수록(<20%) 안정적. 높을수록(≥40%) 불확실성이 큼.',
   },
   {
-    id: 'supplier-count',
+    id: 'supplier-count', icon: '🏭', num: '④', axis: '공급위험', axisColor: 'red',
     name: '등록 공급업체 수',
-    icon: '🏭',
-    num: '④',
-    axis: '공급위험',
-    axisColor: 'red',
     source: '공급업체 현황 테이블',
     formula: '공급업체 현황 테이블의 행 수를 카운트',
     example: '테이블에 5개 업체 행 → 공급업체 수 = 5개',
     interpretation: '많을수록(≥5개) 공급위험 낮음. 적을수록(≤2개) 공급위험 높음.',
   },
   {
-    id: 'concentration',
+    id: 'concentration', icon: '📍', num: '⑤', axis: '공급위험', axisColor: 'red',
     name: '1위 공급업체 집중도',
-    icon: '📍',
-    num: '⑤',
-    axis: '공급위험',
-    axisColor: 'red',
     source: '공급업체 현황 테이블',
     formula: '집중도(%) = 최대 거래금액 업체 ÷ 전체 거래금액 합계 × 100',
     example: '5개 업체 합계 1,200,000만원 / 1위 480,000만원\n→ 집중도 = 480,000 ÷ 1,200,000 × 100 = 40%',
     interpretation: '낮을수록(<30%) 분산. 높을수록(≥70%) 특정 업체 의존도 위험.',
   },
   {
-    id: 'substitutable',
+    id: 'substitutable', icon: '🔄', num: '⑥', axis: '공급위험', axisColor: 'red',
     name: '대체 가능 업체 수',
-    icon: '🔄',
-    num: '⑥',
-    axis: '공급위험',
-    axisColor: 'red',
     source: '공급업체 현황 테이블',
     formula: "대체가능여부 컬럼에서 'Y' 값인 행 수를 카운트",
     example: "5개 업체 중 3개가 'Y' → 대체 가능 업체 수 = 3개",
     interpretation: '많을수록(≥3개) 공급위험 낮음. 0~1개면 전환 어렵고 공급위험 높음.',
   },
   {
-    id: 'spend',
+    id: 'spend', icon: '💰', num: '⑦', axis: '수익영향', axisColor: 'emerald',
     name: '지출 비중',
-    icon: '💰',
-    num: '⑦⑧',
-    axis: '수익영향',
-    axisColor: 'emerald',
     source: '구매 지출 현황 테이블',
     formula: '지출비중(%) = 품목 구매금액 ÷ 전사 총 구매금액 × 100',
     example: '품목금액 12억원 / 전사총액 150억원\n→ 지출비중 = 12 ÷ 150 × 100 = 8.0%',
@@ -89,63 +66,80 @@ const KPI_GUIDE = [
 ];
 
 const CLASSIFICATION_TABLE = [
+  { factor: '지출 비중',      noncritical: '< 2%',         leverage: '≥ 5%',    bottleneck: '< 5%',   strategic: '≥ 10%'       },
+  { factor: '공급업체 수',    noncritical: '≥ 5개',        leverage: '≥ 4개',   bottleneck: '≤ 2개',  strategic: '≤ 3개'       },
+  { factor: '1위 집중도',     noncritical: '< 30%',        leverage: '< 40%',   bottleneck: '≥ 70%',  strategic: '≥ 60%'       },
+  { factor: '대체 가능 업체', noncritical: '≥ 3개',        leverage: '≥ 3개',   bottleneck: '0 ~ 1개', strategic: '0 ~ 1개'    },
+  { factor: '평균 리드타임',  noncritical: '≤ 5일',        leverage: '≤ 15일',  bottleneck: '≥ 30일', strategic: '≥ 20일'      },
+  { factor: '납기준수율',     noncritical: '≥ 95%',        leverage: '≥ 90%',   bottleneck: '< 80%',  strategic: '중간/변동 큼' },
+  { factor: '리드타임 CV',    noncritical: '< 20%',        leverage: '< 25%',   bottleneck: '≥ 40%',  strategic: '≥ 30%'       },
+];
+
+/* 품목군별 핵심 KPI 신호 */
+const QUADRANT_KPI_MAP = [
   {
-    factor: '지출 비중',
-    noncritical: '< 2%',
-    leverage: '≥ 5%',
-    bottleneck: '< 5%',
-    strategic: '≥ 10%',
+    id: 'bottleneck',
+    name: '병목', nameEn: 'Bottleneck',
+    icon: '⚠️',
+    supplyDir: '높음 ↑', profitDir: '낮음 ↓',
+    bg: 'bg-red-50', border: 'border-red-200', titleColor: 'text-red-700', subtitleColor: 'text-red-400',
+    signals: [
+      { num: '④', label: '공급업체 수', hint: '≤ 2개 (매우 적음)', critical: true },
+      { num: '⑥', label: '대체 가능 업체', hint: '0~1개 (전환 불가)', critical: true },
+      { num: '⑤', label: '1위 집중도', hint: '≥ 70% (독점적)', critical: true },
+      { num: '①', label: '리드타임', hint: '≥ 30일 (매우 긺)', critical: false },
+    ],
   },
   {
-    factor: '공급업체 수',
-    noncritical: '≥ 5개',
-    leverage: '≥ 4개',
-    bottleneck: '≤ 2개',
-    strategic: '≤ 3개',
+    id: 'strategic',
+    name: '전략', nameEn: 'Strategic',
+    icon: '✦',
+    supplyDir: '높음 ↑', profitDir: '높음 ↑',
+    bg: 'bg-violet-50', border: 'border-violet-200', titleColor: 'text-violet-700', subtitleColor: 'text-violet-400',
+    signals: [
+      { num: '⑦', label: '지출 비중', hint: '≥ 10% (핵심 지출)', critical: true },
+      { num: '④', label: '공급업체 수', hint: '≤ 3개 (적음)', critical: true },
+      { num: '⑥', label: '대체 가능 업체', hint: '0~1개 (전환 어려움)', critical: true },
+      { num: '⑤', label: '1위 집중도', hint: '≥ 60% (높음)', critical: false },
+    ],
   },
   {
-    factor: '1위 집중도',
-    noncritical: '< 30%',
-    leverage: '< 40%',
-    bottleneck: '≥ 70%',
-    strategic: '≥ 60%',
+    id: 'noncritical',
+    name: '일반', nameEn: 'Non-critical',
+    icon: '✓',
+    supplyDir: '낮음 ↓', profitDir: '낮음 ↓',
+    bg: 'bg-slate-50', border: 'border-slate-200', titleColor: 'text-slate-600', subtitleColor: 'text-slate-400',
+    signals: [
+      { num: '⑦', label: '지출 비중', hint: '< 2% (미미함)', critical: true },
+      { num: '④', label: '공급업체 수', hint: '≥ 5개 (다수)', critical: true },
+      { num: '①', label: '리드타임', hint: '≤ 5일 (짧음)', critical: false },
+      { num: '②', label: '납기준수율', hint: '≥ 95% (안정)', critical: false },
+    ],
   },
   {
-    factor: '대체 가능 업체',
-    noncritical: '≥ 3개',
-    leverage: '≥ 3개',
-    bottleneck: '0 ~ 1개',
-    strategic: '0 ~ 1개',
-  },
-  {
-    factor: '평균 리드타임',
-    noncritical: '≤ 5일',
-    leverage: '≤ 15일',
-    bottleneck: '≥ 30일',
-    strategic: '≥ 20일',
-  },
-  {
-    factor: '납기준수율',
-    noncritical: '≥ 95%',
-    leverage: '≥ 90%',
-    bottleneck: '< 80%',
-    strategic: '중간 / 변동 큼',
-  },
-  {
-    factor: '리드타임 CV',
-    noncritical: '< 20%',
-    leverage: '< 25%',
-    bottleneck: '≥ 40%',
-    strategic: '≥ 30%',
+    id: 'leverage',
+    name: '레버리지', nameEn: 'Leverage',
+    icon: '▲',
+    supplyDir: '낮음 ↓', profitDir: '높음 ↑',
+    bg: 'bg-emerald-50', border: 'border-emerald-200', titleColor: 'text-emerald-700', subtitleColor: 'text-emerald-400',
+    signals: [
+      { num: '⑦', label: '지출 비중', hint: '≥ 5% (큰 구매력)', critical: true },
+      { num: '④', label: '공급업체 수', hint: '≥ 4개 (다수)', critical: true },
+      { num: '②', label: '납기준수율', hint: '≥ 90% (안정)', critical: false },
+      { num: '③', label: '리드타임 CV', hint: '< 25% (안정적)', critical: false },
+    ],
   },
 ];
 
+/* ─────────────────────────────────────────
+   Page Component
+───────────────────────────────────────── */
 export default function GuidePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       <div className="max-w-2xl mx-auto px-4 py-8">
 
-        {/* Back nav */}
+        {/* ── Back nav ── */}
         <div className="mb-6">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,116 +149,304 @@ export default function GuidePage() {
           </Link>
         </div>
 
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="mb-8">
           <span className="inline-block text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full mb-3">
             KPI 산출 가이드
           </span>
-          <h1 className="text-xl font-bold text-gray-900">8개 정량 인자 계산 방법</h1>
+          <h1 className="text-xl font-bold text-gray-900">KPI 계산 · 분류 완전 가이드</h1>
           <p className="text-sm text-gray-500 mt-2">
-            각 인자의 원천 데이터, 계산 공식, 해석 기준을 확인하세요.
+            품목군별 핵심 신호 확인 → 보조 계산기로 KPI 산출 → 공식 참고 → 분류 기준 적용
           </p>
+          {/* Progress steps */}
+          <div className="flex items-center gap-1.5 mt-4 flex-wrap">
+            {['① 핵심 신호 파악', '② KPI 계산기', '③ 공식 가이드', '④ 분류 기준표'].map((s, i) => (
+              <span key={i} className="flex items-center gap-1.5">
+                <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2.5 py-1 rounded-full">{s}</span>
+                {i < 3 && <span className="text-gray-300 text-xs">→</span>}
+              </span>
+            ))}
+          </div>
         </div>
 
-        {/* KPI Cards */}
-        <div className="space-y-4 mb-8">
-          {KPI_GUIDE.map((kpi) => (
-            <div key={kpi.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <div className={`px-4 py-2.5 flex items-center justify-between ${
-                kpi.axisColor === 'red' ? 'bg-red-50 border-b border-red-100' : 'bg-emerald-50 border-b border-emerald-100'
-              }`}>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg leading-none">{kpi.icon}</span>
-                  <span className={`text-[11px] font-black w-5 h-5 flex items-center justify-center rounded-full ${
-                    kpi.axisColor === 'red' ? 'bg-red-200 text-red-800' : 'bg-emerald-200 text-emerald-800'
-                  }`}>{kpi.num}</span>
-                  <h3 className="text-sm font-bold text-gray-800">{kpi.name}</h3>
-                </div>
-                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                  kpi.axisColor === 'red' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
-                }`}>
-                  {kpi.axis} 축
-                </span>
+        {/* ════════════════════════════════════
+            SECTION 1 : 품목군별 핵심 KPI 시각화
+        ════════════════════════════════════ */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
+            <h2 className="text-base font-bold text-gray-900">품목군별 핵심 KPI 신호</h2>
+          </div>
+          <p className="text-xs text-gray-500 ml-8 mb-4">
+            각 품목군을 결정짓는 <strong>핵심 KPI</strong>를 먼저 확인하세요. 붉은 배지는 해당 품목군을 강하게 시사하는 신호입니다.
+          </p>
+
+          {/* 2×2 Axis labels */}
+          <div className="relative">
+            {/* Y axis label */}
+            <div className="flex items-center gap-2 mb-2 ml-1">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <span className="text-[11px] font-semibold text-red-600">공급위험(Supply Risk) 축</span>
               </div>
-              <div className="p-4 space-y-3">
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">원천 데이터</p>
-                  <p className="text-xs text-gray-600">{kpi.source}</p>
+              <span className="text-[11px] text-gray-400">위 ↑ = 높음 / 아래 ↓ = 낮음</span>
+            </div>
+            <div className="flex items-center gap-2 mb-3 ml-1">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-emerald-400" />
+                <span className="text-[11px] font-semibold text-emerald-600">수익영향(Profit Impact) 축</span>
+              </div>
+              <span className="text-[11px] text-gray-400">좌 ← = 낮음 / 우 → = 높음</span>
+            </div>
+
+            {/* 2x2 Grid */}
+            <div className="grid grid-cols-2 gap-2">
+              {QUADRANT_KPI_MAP.map(q => (
+                <div key={q.id} className={`${q.bg} ${q.border} border rounded-xl p-3`}>
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">{q.icon}</span>
+                        <span className={`text-sm font-bold ${q.titleColor}`}>{q.name}</span>
+                      </div>
+                      <p className={`text-[10px] ${q.subtitleColor} mt-0.5`}>{q.nameEn}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[9px] text-gray-400">공급위험 <span className="font-semibold text-gray-600">{q.supplyDir}</span></p>
+                      <p className="text-[9px] text-gray-400">수익영향 <span className="font-semibold text-gray-600">{q.profitDir}</span></p>
+                    </div>
+                  </div>
+
+                  {/* KPI Signal list */}
+                  <div className="space-y-1">
+                    {q.signals.map(sig => (
+                      <div key={sig.num} className="flex items-start gap-1.5">
+                        <span className={`shrink-0 mt-0.5 text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full ${
+                          q.id === 'leverage' || q.id === 'noncritical'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-red-100 text-red-700'
+                        }`}>{sig.num}</span>
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold text-gray-700">{sig.label}</span>
+                          {sig.critical && (
+                            <span className={`ml-1 text-[9px] font-bold px-1 py-0.5 rounded ${q.titleColor} ${q.bg}`}>핵심</span>
+                          )}
+                          <p className="text-[10px] text-gray-500">{sig.hint}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">계산 공식</p>
-                  <pre className="text-xs text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap font-mono leading-relaxed">
-                    {kpi.formula}
-                  </pre>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">예시</p>
-                  <pre className="text-xs text-blue-700 bg-blue-50 rounded-lg p-3 whitespace-pre-wrap font-mono leading-relaxed">
-                    {kpi.example}
-                  </pre>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">해석 기준</p>
-                  <p className="text-xs text-gray-600 leading-relaxed">{kpi.interpretation}</p>
-                </div>
+              ))}
+            </div>
+
+            {/* Axis arrows overlay hint */}
+            <div className="flex justify-between mt-2 px-1">
+              <span className="text-[10px] text-gray-400">← 수익영향 낮음</span>
+              <span className="text-[10px] text-gray-400">수익영향 높음 →</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ════════════════════════════════════
+            SECTION 2 : KPI 계산 보조도구
+        ════════════════════════════════════ */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+            <h2 className="text-base font-bold text-gray-900">KPI 계산 보조도구</h2>
+          </div>
+          <p className="text-xs text-gray-500 ml-8 mb-4">
+            원천 데이터 값을 입력하면 KPI를 자동 계산합니다.
+            <strong className="text-gray-700"> 납기이력 → 공급업체 → 지출비중</strong> 순서로 계산하세요.
+          </p>
+
+          {/* Data source guide */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {[
+              { table: '납기 이력', icon: '📅', kpis: '①②③', color: 'bg-blue-50 border-blue-200 text-blue-700' },
+              { table: '공급업체 현황', icon: '🏭', kpis: '④⑤⑥', color: 'bg-orange-50 border-orange-200 text-orange-700' },
+              { table: '구매 지출', icon: '💰', kpis: '⑦', color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+            ].map(src => (
+              <div key={src.table} className={`border rounded-lg p-2.5 text-center ${src.color}`}>
+                <div className="text-xl mb-1">{src.icon}</div>
+                <p className="text-[10px] font-bold leading-tight">{src.table}</p>
+                <p className="text-[10px] mt-1 opacity-75">KPI {src.kpis}</p>
+              </div>
+            ))}
+          </div>
+
+          <KpiCalculator />
+        </section>
+
+        {/* ════════════════════════════════════
+            SECTION 3 : KPI 공식 가이드 (accordion)
+        ════════════════════════════════════ */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">3</span>
+            <h2 className="text-base font-bold text-gray-900">KPI 공식 상세 가이드</h2>
+          </div>
+          <p className="text-xs text-gray-500 ml-8 mb-4">각 항목을 클릭하면 공식과 예시를 확인할 수 있습니다.</p>
+
+          {/* Supply Risk KPIs */}
+          <div className="mb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-red-400" />
+              <span className="text-xs font-bold text-red-600">공급위험(Supply Risk) 축 — KPI ①~⑥</span>
+            </div>
+            <div className="space-y-1.5">
+              {KPI_GUIDE.filter(k => k.axisColor === 'red').map(kpi => (
+                <details key={kpi.id} className="group bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <summary className="flex items-center justify-between px-4 py-3 cursor-pointer list-none hover:bg-red-50/50 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base leading-none">{kpi.icon}</span>
+                      <span className="text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-700">{kpi.num}</span>
+                      <span className="text-sm font-bold text-gray-800">{kpi.name}</span>
+                    </div>
+                    <span className="text-gray-300 group-open:rotate-90 transition-transform text-base">›</span>
+                  </summary>
+                  <div className="px-4 pb-4 space-y-3 border-t border-red-100">
+                    <div className="pt-3">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">원천 데이터</p>
+                      <p className="text-xs text-gray-600">{kpi.source}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">계산 공식</p>
+                      <pre className="text-xs text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap font-mono leading-relaxed">{kpi.formula}</pre>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">예시</p>
+                      <pre className="text-xs text-blue-700 bg-blue-50 rounded-lg p-3 whitespace-pre-wrap font-mono leading-relaxed">{kpi.example}</pre>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">해석 기준</p>
+                      <p className="text-xs text-gray-600 leading-relaxed">{kpi.interpretation}</p>
+                    </div>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          {/* Profit Impact KPIs */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-xs font-bold text-emerald-600">수익영향(Profit Impact) 축 — KPI ⑦</span>
+            </div>
+            <div className="space-y-1.5">
+              {KPI_GUIDE.filter(k => k.axisColor === 'emerald').map(kpi => (
+                <details key={kpi.id} className="group bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <summary className="flex items-center justify-between px-4 py-3 cursor-pointer list-none hover:bg-emerald-50/50 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base leading-none">{kpi.icon}</span>
+                      <span className="text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100 text-emerald-700">{kpi.num}</span>
+                      <span className="text-sm font-bold text-gray-800">{kpi.name}</span>
+                    </div>
+                    <span className="text-gray-300 group-open:rotate-90 transition-transform text-base">›</span>
+                  </summary>
+                  <div className="px-4 pb-4 space-y-3 border-t border-emerald-100">
+                    <div className="pt-3">
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">원천 데이터</p>
+                      <p className="text-xs text-gray-600">{kpi.source}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">계산 공식</p>
+                      <pre className="text-xs text-gray-700 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap font-mono leading-relaxed">{kpi.formula}</pre>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">예시</p>
+                      <pre className="text-xs text-blue-700 bg-blue-50 rounded-lg p-3 whitespace-pre-wrap font-mono leading-relaxed">{kpi.example}</pre>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">해석 기준</p>
+                      <p className="text-xs text-gray-600 leading-relaxed">{kpi.interpretation}</p>
+                    </div>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ════════════════════════════════════
+            SECTION 4 : 분류 판단 기준표
+        ════════════════════════════════════ */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0">4</span>
+            <h2 className="text-base font-bold text-gray-900">품목군 분류 판단 기준표</h2>
+          </div>
+          <p className="text-xs text-gray-500 ml-8 mb-4">
+            계산한 KPI 값이 아래 범위에 해당하면 해당 품목군 가능성이 높습니다.
+          </p>
+
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="px-3 py-2.5 text-left font-semibold text-gray-500 bg-gray-50 min-w-[90px]">KPI 인자</th>
+                    <th className="px-3 py-2.5 text-center font-semibold text-slate-600 bg-slate-50">일반<br/><span className="font-normal text-[10px]">Non-critical</span></th>
+                    <th className="px-3 py-2.5 text-center font-semibold text-emerald-600 bg-emerald-50">레버리지<br/><span className="font-normal text-[10px]">Leverage</span></th>
+                    <th className="px-3 py-2.5 text-center font-semibold text-red-600 bg-red-50">병목<br/><span className="font-normal text-[10px]">Bottleneck</span></th>
+                    <th className="px-3 py-2.5 text-center font-semibold text-violet-600 bg-violet-50">전략<br/><span className="font-normal text-[10px]">Strategic</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CLASSIFICATION_TABLE.map((row, i) => (
+                    <tr key={row.factor} className={`border-b border-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <td className="px-3 py-2 font-semibold text-gray-700">{row.factor}</td>
+                      <td className="px-3 py-2 text-center text-slate-600 font-mono">{row.noncritical}</td>
+                      <td className="px-3 py-2 text-center text-emerald-600 font-mono">{row.leverage}</td>
+                      <td className="px-3 py-2 text-center text-red-600 font-mono">{row.bottleneck}</td>
+                      <td className="px-3 py-2 text-center text-violet-600 font-mono">{row.strategic}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-3 bg-amber-50 border-t border-amber-100">
+              <p className="text-[11px] text-amber-700 leading-relaxed">
+                <strong>판단 우선순위:</strong> 모든 인자가 동일한 품목군을 가리키지 않을 수 있습니다.
+                상충 신호가 있을 때는 <strong>⑦ 지출비중(수익영향)</strong>과
+                <strong> ④ 공급업체 수(공급위험)</strong>을 가장 중요한 인자로 우선 판단하세요.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ════════════════════════════════════
+            SECTION 5 : 심화 도구 — 재고 계산기
+        ════════════════════════════════════ */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-6 h-6 rounded-full bg-gray-400 text-white text-xs font-bold flex items-center justify-center shrink-0">+</span>
+            <h2 className="text-base font-bold text-gray-900">심화 보조도구 — 재고 계산기</h2>
+          </div>
+          <p className="text-xs text-gray-500 ml-8 mb-4">
+            품목군 분류 후 재고 전략 수립 시 활용. EOQ · 안전재고 · 재주문점 계산기입니다.
+          </p>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 bg-gray-50 flex items-center gap-2">
+              <span className="text-base">📦</span>
+              <div>
+                <p className="text-sm font-bold text-gray-800">재고 계산기</p>
+                <p className="text-xs text-gray-500">EOQ · 안전재고 · 재주문점</p>
               </div>
             </div>
-          ))}
-        </div>
+            <div className="p-4">
+              <InventoryCalculator />
+            </div>
+          </div>
+        </section>
 
-        {/* Classification Table */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-8">
-          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-sm font-bold text-gray-800">품목군 분류 판단 기준표</h2>
-            <p className="text-xs text-gray-500 mt-0.5">KPI 값이 아래 범위에 해당하면 해당 품목군일 가능성이 높습니다.</p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-3 py-2.5 text-left font-semibold text-gray-500 bg-gray-50">KPI 인자</th>
-                  <th className="px-3 py-2.5 text-center font-semibold text-slate-600 bg-slate-50">일반</th>
-                  <th className="px-3 py-2.5 text-center font-semibold text-emerald-600 bg-emerald-50">레버리지</th>
-                  <th className="px-3 py-2.5 text-center font-semibold text-red-600 bg-red-50">병목</th>
-                  <th className="px-3 py-2.5 text-center font-semibold text-violet-600 bg-violet-50">전략</th>
-                </tr>
-              </thead>
-              <tbody>
-                {CLASSIFICATION_TABLE.map((row, i) => (
-                  <tr key={row.factor} className={`border-b border-gray-50 ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                    <td className="px-3 py-2 font-semibold text-gray-700">{row.factor}</td>
-                    <td className="px-3 py-2 text-center text-slate-600 font-mono">{row.noncritical}</td>
-                    <td className="px-3 py-2 text-center text-emerald-600 font-mono">{row.leverage}</td>
-                    <td className="px-3 py-2 text-center text-red-600 font-mono">{row.bottleneck}</td>
-                    <td className="px-3 py-2 text-center text-violet-600 font-mono">{row.strategic}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-4 py-3 bg-amber-50 border-t border-amber-100">
-            <p className="text-[11px] text-amber-700 leading-relaxed">
-              <strong>주의:</strong> 모든 인자가 동일한 품목군을 가리키지 않을 수 있습니다.
-              상충되는 신호가 있을 때는 <strong>지출비중(수익영향)</strong>과 <strong>공급업체 수/집중도(공급위험)</strong>를 가장 중요한 인자로 우선 판단하세요.
-            </p>
-          </div>
-        </div>
-
-        {/* Inventory Calculator */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
-          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-            <h2 className="text-sm font-bold text-gray-800">보조 도구 — 재고 계산기</h2>
-            <p className="text-xs text-gray-500 mt-0.5">EOQ · 안전재고 · 재주문점 계산</p>
-          </div>
-          <div className="p-4">
-            <InventoryCalculator />
-          </div>
-        </div>
-
-        {/* CTA */}
+        {/* ── CTA ── */}
         <Link
           href="/items"
-          className="block w-full text-center py-3 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
+          className="block w-full text-center py-3.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm"
         >
           품목 데이터 분석 시작 →
         </Link>
