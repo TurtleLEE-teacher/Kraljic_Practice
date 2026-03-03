@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import KpiCalculator from './KpiCalculator';
 
-/* ─── types ─── */
 type Answer = { quadrant: string; reason: string };
 const EMPTY: Answer = { quadrant: '', reason: '' };
 const LS_KEY = 'kraljic_survey_v1';
@@ -14,46 +13,44 @@ const QUADRANTS = [
     id: 'noncritical',
     label: '일반',
     desc: '저위험 · 저영향',
-    btn:   'border-slate-300 text-slate-600 hover:bg-slate-50',
-    sel:   'bg-slate-700 border-slate-700 text-white',
-    badge: 'bg-slate-100 text-slate-700',
+    btn:         'border-slate-300 text-slate-600 hover:bg-slate-50',
+    sel:         'bg-slate-700 border-slate-700 text-white',
+    badge:       'bg-slate-100 text-slate-700',
+    activeBorder:'border-slate-400',
   },
   {
     id: 'bottleneck',
     label: '병목',
     desc: '고위험 · 저영향',
-    btn:   'border-red-300 text-red-600 hover:bg-red-50',
-    sel:   'bg-red-600 border-red-600 text-white',
-    badge: 'bg-red-100 text-red-700',
+    btn:         'border-red-300 text-red-600 hover:bg-red-50',
+    sel:         'bg-red-600 border-red-600 text-white',
+    badge:       'bg-red-100 text-red-700',
+    activeBorder:'border-red-400',
   },
   {
     id: 'leverage',
     label: '레버리지',
     desc: '저위험 · 고영향',
-    btn:   'border-emerald-300 text-emerald-700 hover:bg-emerald-50',
-    sel:   'bg-emerald-600 border-emerald-600 text-white',
-    badge: 'bg-emerald-100 text-emerald-700',
+    btn:         'border-emerald-300 text-emerald-700 hover:bg-emerald-50',
+    sel:         'bg-emerald-600 border-emerald-600 text-white',
+    badge:       'bg-emerald-100 text-emerald-700',
+    activeBorder:'border-emerald-400',
   },
   {
     id: 'strategic',
     label: '전략',
     desc: '고위험 · 고영향',
-    btn:   'border-violet-300 text-violet-700 hover:bg-violet-50',
-    sel:   'bg-violet-600 border-violet-600 text-white',
-    badge: 'bg-violet-100 text-violet-700',
+    btn:         'border-violet-300 text-violet-700 hover:bg-violet-50',
+    sel:         'bg-violet-600 border-violet-600 text-white',
+    badge:       'bg-violet-100 text-violet-700',
+    activeBorder:'border-violet-400',
   },
 ] as const;
 
-interface Props {
-  itemId: string;
-}
+export default function ItemActions({ itemId }: { itemId: string }) {
+  const [answer, setAnswer] = useState<Answer>(EMPTY);
+  const [flash, setFlash]   = useState(false);
 
-export default function ItemActions({ itemId }: Props) {
-  const [tab, setTab]         = useState<'classify' | 'calc'>('calc');
-  const [answer, setAnswer]   = useState<Answer>(EMPTY);
-  const [flash, setFlash]     = useState(false);
-
-  /* Load from localStorage */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -64,7 +61,6 @@ export default function ItemActions({ itemId }: Props) {
     } catch {}
   }, [itemId]);
 
-  /* Persist to localStorage */
   const persist = useCallback((next: Answer) => {
     try {
       const raw = localStorage.getItem(LS_KEY);
@@ -78,7 +74,7 @@ export default function ItemActions({ itemId }: Props) {
     setAnswer(next);
     persist(next);
     setFlash(true);
-    setTimeout(() => setFlash(false), 1200);
+    setTimeout(() => setFlash(false), 1500);
   };
 
   const setReason = (reason: string) => {
@@ -90,51 +86,48 @@ export default function ItemActions({ itemId }: Props) {
   const selQ = QUADRANTS.find(q => q.id === answer.quadrant);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="space-y-3">
 
-      {/* Section label + tab toggle */}
-      <div className="flex items-center border-b border-gray-100">
-        <div className="flex gap-0 flex-1">
-          <button
-            onClick={() => setTab('calc')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors cursor-pointer border-b-2 ${
-              tab === 'calc'
-                ? 'text-blue-700 border-blue-500 bg-blue-50/60'
-                : 'text-gray-400 border-transparent hover:text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            KPI 계산기
-          </button>
-          <button
-            onClick={() => setTab('classify')}
-            className={`flex-1 py-3 text-sm font-semibold transition-colors cursor-pointer border-b-2 relative ${
-              tab === 'classify'
-                ? 'text-emerald-700 border-emerald-500 bg-emerald-50/60'
-                : 'text-gray-400 border-transparent hover:text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            분류 기록
-            {answer.quadrant && selQ && (
-              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${selQ.badge}`}>
-                {selQ.label}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Tab: KPI 계산기 */}
-      {tab === 'calc' && (
-        <div className="p-0">
+      {/* ── KPI 계산기 ── collapsible, not submit-related */}
+      <details className="group bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <summary className="flex items-center justify-between px-4 py-3.5 cursor-pointer list-none hover:bg-gray-50 transition-colors select-none">
+          <div className="flex items-center gap-2.5">
+            <span className="text-sm font-bold text-gray-700">KPI 계산기</span>
+            <span className="text-xs text-gray-400">납기 · 공급업체 · 지출 자동 산출</span>
+          </div>
+          <span className="text-gray-400 group-open:rotate-90 transition-transform text-xl leading-none">›</span>
+        </summary>
+        <div className="border-t border-gray-100">
           <KpiCalculator />
         </div>
-      )}
+      </details>
 
-      {/* Tab: 분류 기록 */}
-      {tab === 'classify' && (
-        <div className="p-4 space-y-4">
+      {/* ── 이 품목 분류 (임시 저장) ── */}
+      <div className={`bg-white rounded-xl border-2 overflow-hidden transition-colors ${
+        selQ ? selQ.activeBorder : 'border-dashed border-gray-300'
+      }`}>
 
-          {/* Quadrant grid */}
+        {/* Header */}
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-gray-800">이 품목 분류</span>
+            <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+              임시 저장
+            </span>
+          </div>
+          {selQ && (
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${selQ.badge}`}>
+              {selQ.label}
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+          )}
+        </div>
+
+        <div className="p-4 space-y-3">
+
+          {/* Quadrant buttons 2×2 */}
           <div className="grid grid-cols-2 gap-2">
             {QUADRANTS.map(q => {
               const active = answer.quadrant === q.id;
@@ -153,32 +146,36 @@ export default function ItemActions({ itemId }: Props) {
             })}
           </div>
 
-          {/* Reason textarea */}
-          <div>
-            <textarea
-              value={answer.reason}
-              onChange={e => setReason(e.target.value)}
-              placeholder={`분류 근거를 입력하세요&#10;예) 지출비중 8%, 공급업체 5개, 납기준수율 91.7%, CV 12% → 레버리지`}
-              rows={4}
-              className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3.5 py-3 resize-none focus:outline-none focus:border-blue-300 placeholder-gray-300 leading-relaxed"
-            />
-          </div>
+          {/* Reason */}
+          <textarea
+            value={answer.reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder={`분류 근거 메모\n예) 지출비중 8.0%, 공급업체 5개(대체 Y 5개), 납기준수율 91.7%, CV 12% → 레버리지`}
+            rows={3}
+            className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3.5 py-3 resize-none focus:outline-none focus:border-blue-300 placeholder-gray-300 leading-relaxed"
+          />
 
-          {/* Status bar */}
+          {/* Status row */}
           <div className="flex items-center justify-between">
-            <span className={`text-xs transition-all ${flash ? 'text-emerald-600 font-semibold' : 'text-gray-400'}`}>
-              {flash ? '저장됨' : answer.quadrant ? `${selQ?.label} 선택됨` : '품목군을 선택하세요'}
+            <span className={`text-xs transition-colors ${
+              flash ? 'text-emerald-600 font-semibold' : 'text-gray-400'
+            }`}>
+              {flash
+                ? '임시 저장됨 ✓'
+                : answer.quadrant
+                  ? `${selQ?.label}(으)로 임시 저장됨`
+                  : '품목군 선택 시 자동 임시 저장'}
             </span>
             <Link
               href="/survey"
               className="text-xs text-blue-500 hover:text-blue-700 font-semibold whitespace-nowrap"
             >
-              전체 제출 보기 →
+              최종 제출 페이지 →
             </Link>
           </div>
 
         </div>
-      )}
+      </div>
 
     </div>
   );
