@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ITEMS, ITEM_MAP } from '@/data/items';
 import RawDataTable from '@/components/RawDataTable';
+import ItemActions from '@/components/ItemActions';
 
 export function generateStaticParams() {
   return ITEMS.map((item) => ({ id: item.id }));
@@ -132,6 +133,9 @@ export default async function ItemDetailPage({ params }: Props) {
           rows={spendRows}
           note="지출비중(%) = 품목 구매금액 ÷ 전사 총 구매금액 × 100"
         />
+
+        {/* KPI 계산기 + 분류 기록 */}
+        <ItemActions itemId={id} />
 
         {/* Prev / Next */}
         <div className="flex gap-3 pt-2">
