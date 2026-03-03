@@ -17,12 +17,21 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+/* ── date util ── */
+function daysBetween(from: string, to: string) {
+  return Math.round(
+    (new Date(to).getTime() - new Date(from).getTime()) / 86_400_000
+  );
+}
+
 export default async function ItemDetailPage({ params }: Props) {
   const { id } = await params;
   const item = ITEM_MAP[id];
-
   if (!item) notFound();
 
+  /* ──────────────────────────────────
+     Row data for tables
+  ────────────────────────────────── */
   const deliveryRows = item.deliveries.map((d) => ({
     poNumber:    d.poNumber,
     orderDate:   d.orderDate,
@@ -30,11 +39,11 @@ export default async function ItemDetailPage({ params }: Props) {
     actualDate:  d.actualDate,
   }));
 
-  const totalAmount = item.suppliers.reduce((sum, s) => sum + s.annualAmount, 0);
+  const totalAmt = item.suppliers.reduce((s, x) => s + x.annualAmount, 0);
   const supplierRows = item.suppliers.map((s) => ({
     name:          s.name,
     annualAmount:  s.annualAmount.toLocaleString('ko-KR'),
-    share:         ((s.annualAmount / totalAmount) * 100).toFixed(1) + '%',
+    share:         ((s.annualAmount / totalAmt) * 100).toFixed(1) + '%',
     substitutable: s.substitutable,
     note:          s.note,
   }));
@@ -45,9 +54,62 @@ export default async function ItemDetailPage({ params }: Props) {
     totalSpend: s.totalSpend.toFixed(0) + '억',
   }));
 
+  /* ──────────────────────────────────
+     Server-side KPI computation
+  ────────────────────────────────── */
+
+  // ── 납기 KPIs ──
+  const leadTimes = item.deliveries.map((d) =>
+    daysBetween(d.orderDate, d.actualDate)
+  );
+  const ltN      = leadTimes.length;
+  const ltSum    = leadTimes.reduce((a, b) => a + b, 0);
+  const avgLT    = ltSum / ltN;
+  const variance = leadTimes.reduce((s, lt) => s + (lt - avgLT) ** 2, 0) / ltN;
+  const sigma    = Math.sqrt(variance);
+  const cv       = avgLT > 0 ? (sigma / avgLT) * 100 : 0;
+
+  const onTimeN  = item.deliveries.filter((d) => d.actualDate <= d.plannedDate).length;
+  const otd      = (onTimeN / ltN) * 100;
+  const maxLT    = Math.max(...leadTimes);
+
+  const delayAmounts = item.deliveries
+    .map((d) => daysBetween(d.plannedDate, d.actualDate))
+    .filter((d) => d > 0);
+  const lateN        = delayAmounts.length;
+  const avgDelayDays = lateN > 0
+    ? delayAmounts.reduce((a, b) => a + b, 0) / lateN : 0;
+  const maxDelay     = lateN > 0 ? Math.max(...delayAmounts) : 0;
+
+  // ── 공급업체 KPIs ──
+  const supCount  = item.suppliers.length;
+  const maxAmt    = Math.max(...item.suppliers.map((x) => x.annualAmount));
+  const topConc   = (maxAmt / totalAmt) * 100;
+  const subCount  = item.suppliers.filter((x) => x.substitutable === 'Y').length;
+  const subRatio  = (subCount / supCount) * 100;
+  const hhi       = item.suppliers.reduce((s, x) => {
+    const share = x.annualAmount / totalAmt;
+    return s + share * share * 10000;
+  }, 0);
+
+  // ── 지출 KPIs ──
+  const latestSpend   = item.spends[item.spends.length - 1];
+  const spendRatio    = (latestSpend.itemSpend / latestSpend.totalSpend) * 100;
+  const avgSpendRatio = item.spends
+    .reduce((s, sp) => s + (sp.itemSpend / sp.totalSpend) * 100, 0) / item.spends.length;
+
+  let yoyGrowth: number | null = null;
+  if (item.spends.length >= 2) {
+    const prev = item.spends[item.spends.length - 2];
+    yoyGrowth = ((latestSpend.itemSpend - prev.itemSpend) / prev.itemSpend) * 100;
+  }
+
+  /* ──────────────────────────────────
+     Navigation
+  ────────────────────────────────── */
   const itemIndex = ITEMS.findIndex((i) => i.id === id);
-  const prevItem  = itemIndex > 0                  ? ITEMS[itemIndex - 1] : null;
-  const nextItem  = itemIndex < ITEMS.length - 1   ? ITEMS[itemIndex + 1] : null;
+  const prevItem  = itemIndex > 0                ? ITEMS[itemIndex - 1] : null;
+  const nextItem  = itemIndex < ITEMS.length - 1 ? ITEMS[itemIndex + 1] : null;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -77,7 +139,6 @@ export default async function ItemDetailPage({ params }: Props) {
             </Link>
           </div>
         </div>
-        {/* Item nav pills */}
         <div className="max-w-5xl mx-auto px-4 pb-2 flex gap-1 overflow-x-auto">
           {ITEMS.map((it) => (
             <Link
@@ -97,7 +158,7 @@ export default async function ItemDetailPage({ params }: Props) {
 
       <div className="max-w-5xl mx-auto px-4 py-5 space-y-6">
 
-        {/* ══ Section 1: 납기 이력  |  납기 KPI 계산 ①②③ ══ */}
+        {/* ══ 납기 이력  |  납기 KPI ①②③ ══ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <RawDataTable
             title="1. 납기 이력"
@@ -111,10 +172,14 @@ export default async function ItemDetailPage({ params }: Props) {
             rows={deliveryRows}
             note="리드타임 = 실제입고일 − 발주일 / 납기준수 = 실제입고일 ≤ 납기예정일 / CV = σ ÷ 평균 × 100"
           />
-          <DeliveryCalcPanel />
+          <DeliveryCalcPanel defaults={{
+            ltSum, ltN, avgLT, sigma, cv,
+            onTimeN, otd, maxLT,
+            lateN, avgDelayDays, maxDelay,
+          }} />
         </div>
 
-        {/* ══ Section 2: 공급업체 현황  |  공급업체 KPI 계산 ④⑤⑥ ══ */}
+        {/* ══ 공급업체 현황  |  공급업체 KPI ④⑤⑥ ══ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <RawDataTable
             title="2. 공급업체 현황"
@@ -127,28 +192,38 @@ export default async function ItemDetailPage({ params }: Props) {
               { key: 'note',          label: '비고' },
             ]}
             rows={supplierRows}
-            note="집중도 = 최대거래업체 ÷ 전체합계 × 100 / 대체가능 업체 수 = Y 행 카운트"
+            note="집중도 = 최대거래업체 ÷ 전체합계 × 100 / 대체가능 = Y 행 카운트"
           />
-          <SupplierCalcPanel />
+          <SupplierCalcPanel defaults={{
+            supCount, totalAmt, maxAmt, topConc,
+            subCount, subRatio, hhi,
+          }} />
         </div>
 
-        {/* ══ Section 3: 구매 지출 현황  |  지출 KPI 계산 ⑦ ══ */}
+        {/* ══ 구매 지출 현황  |  지출 KPI ⑦ ══ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
           <RawDataTable
             title="3. 구매 지출 현황"
             subtitle="3개 연도 기준"
             columns={[
-              { key: 'year',       label: '연도',           align: 'center' },
-              { key: 'itemSpend',  label: '품목 구매금액',  align: 'right' },
+              { key: 'year',       label: '연도',             align: 'center' },
+              { key: 'itemSpend',  label: '품목 구매금액',    align: 'right' },
               { key: 'totalSpend', label: '전사 총 구매금액', align: 'right' },
             ]}
             rows={spendRows}
             note="지출비중(%) = 품목 구매금액 ÷ 전사 총 구매금액 × 100"
           />
-          <SpendCalcPanel />
+          <SpendCalcPanel defaults={{
+            itemSpend:    latestSpend.itemSpend,
+            totalSpend:   latestSpend.totalSpend,
+            spendRatio,
+            absSpend:     latestSpend.itemSpend,
+            yoyGrowth,
+            avgSpendRatio,
+          }} />
         </div>
 
-        {/* ══ 이 품목 분류 (임시 저장) ══ */}
+        {/* ══ 이 품목 분류 ══ */}
         <ItemActions itemId={id} />
 
         {/* ══ Prev / Next ══ */}

@@ -2,8 +2,29 @@
 
 import { useState, useMemo } from 'react';
 
-/* ─── Shared ─── */
+/* ─── shared types ─── */
 type Risk = 'low' | 'mid' | 'high';
+
+export interface DeliveryDefaults {
+  ltSum: number; ltN: number; avgLT: number;
+  sigma: number; cv: number;
+  onTimeN: number; otd: number;
+  maxLT: number; lateN: number; avgDelayDays: number; maxDelay: number;
+}
+export interface SupplierDefaults {
+  supCount: number; totalAmt: number; maxAmt: number; topConc: number;
+  subCount: number; subRatio: number; hhi: number;
+}
+export interface SpendDefaults {
+  itemSpend: number; totalSpend: number; spendRatio: number;
+  absSpend: number; yoyGrowth: number | null; avgSpendRatio: number;
+}
+
+/* ─── helpers ─── */
+function fmt(n: number, dec = 1) {
+  return Number.isInteger(n) ? n.toString() : n.toFixed(dec);
+}
+function n2s(n: number) { return fmt(n, 2); } // for initial input state
 
 function RiskBadge({ risk, axis }: { risk: Risk; axis: 'supply' | 'profit' }) {
   const label = {
@@ -16,136 +37,174 @@ function RiskBadge({ risk, axis }: { risk: Risk; axis: 'supply' | 'profit' }) {
     mid:  'bg-amber-100 text-amber-700',
     high: axis === 'supply' ? 'bg-red-100 text-red-700'        : 'bg-emerald-100 text-emerald-700',
   }[risk];
-  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${cls}`}>{label}</span>;
+  return <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${cls}`}>{label}</span>;
 }
 
-function Num({ value, onChange, placeholder, width = 'w-20' }: {
-  value: string; onChange: (v: string) => void; placeholder: string; width?: string;
+function KpiInput({ value, onChange, width = 'w-20' }: {
+  value: string; onChange: (v: string) => void; width?: string;
 }) {
   return (
     <input
       type="number" value={value} min="0" step="any"
       onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className={`${width} px-2 py-1 border border-gray-200 rounded-lg text-sm text-center focus:outline-none focus:border-blue-400 bg-white`}
+      className={`${width} px-1.5 py-1 border border-blue-200 rounded-md text-xs text-center focus:outline-none focus:border-blue-500 bg-blue-50/40 font-mono`}
     />
   );
 }
 
-/* ─── KPI section wrapper ─── */
-function KpiSection({ num, name, axis, children }: {
-  num: string; name: string; axis: 'supply' | 'profit'; children: React.ReactNode;
+const Op = ({ v }: { v: string }) => (
+  <span className="text-gray-400 text-xs font-medium shrink-0">{v}</span>
+);
+
+/* ─── per-KPI row ─── */
+function KpiRow({
+  num, name, axis, formula, result, unit, risk, extra
+}: {
+  num: string; name: string; axis: 'supply' | 'profit';
+  formula: React.ReactNode;
+  result: number | null; unit: string; risk: Risk | null;
+  extra?: string;
 }) {
   const numCls = axis === 'supply' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700';
   return (
-    <div className="space-y-2 py-3 border-b border-gray-100 last:border-0">
-      <div className="flex items-center gap-1.5">
-        <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shrink-0 ${numCls}`}>{num}</span>
-        <span className="text-xs font-bold text-gray-700">{name}</span>
+    <div className="py-3 border-b border-gray-100 last:border-0 space-y-1.5">
+      {/* header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shrink-0 ${numCls}`}>{num}</span>
+          <span className="text-xs font-bold text-gray-700">{name}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {result !== null && (
+            <span className="text-sm font-black text-gray-900 whitespace-nowrap">
+              {fmt(result, unit === '일' ? 1 : unit === '%' ? 2 : 0)}{unit}
+            </span>
+          )}
+          {result !== null && risk && <RiskBadge risk={risk} axis={axis} />}
+        </div>
       </div>
-      {children}
+      {/* formula row */}
+      <div className="flex items-center gap-1 flex-wrap pl-6">
+        {formula}
+      </div>
+      {extra && <p className="text-[10px] text-gray-400 pl-6">{extra}</p>}
     </div>
   );
 }
 
-/* ─── Equation display ─── */
-function Eq({ children }: { children: React.ReactNode }) {
+/* ─── ref stat (read-only) ─── */
+function RefStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="flex items-center gap-1.5 flex-wrap text-sm">
-      {children}
+    <div className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+      <span className="text-xs text-gray-500">{label}</span>
+      <div className="text-right">
+        <span className="text-xs font-bold text-gray-700">{value}</span>
+        {sub && <span className="text-[10px] text-gray-400 ml-1">{sub}</span>}
+      </div>
     </div>
   );
 }
-const Op = ({ v }: { v: string }) => <span className="text-gray-400 font-medium">{v}</span>;
-const Val = ({ v, unit }: { v: string; unit?: string }) => (
-  <span className="font-black text-gray-900">{v}<span className="text-xs font-normal text-gray-400 ml-0.5">{unit}</span></span>
-);
 
 /* ════════════════════════════════════════
    DeliveryCalcPanel  ①②③
 ════════════════════════════════════════ */
-export function DeliveryCalcPanel() {
-  // ① 평균 리드타임
-  const [ltSum, setLtSum] = useState('');
-  const [ltN,   setLtN]   = useState('');
-  // ② 납기준수율
-  const [okN,   setOkN]   = useState('');
-  const [totN,  setTotN]  = useState('');
-  // ③ CV (σ)
-  const [sigma, setSigma] = useState('');
+export function DeliveryCalcPanel({ defaults: d }: { defaults: DeliveryDefaults }) {
+  // ① 평균 리드타임  — inputs: Σ리드타임, N
+  const [ltSum, setLtSum] = useState(fmt(d.ltSum, 0));
+  const [ltN,   setLtN]   = useState(fmt(d.ltN, 0));
 
-  const avg = useMemo(() => {
+  // ② OTD  — inputs: 준수건수, 전체건수
+  const [okN,  setOkN]  = useState(fmt(d.onTimeN, 0));
+  const [totN, setTotN] = useState(fmt(d.ltN, 0));
+
+  // ③ CV  — inputs: σ (avgLT auto-linked from ①)
+  const [sigma, setSigma] = useState(n2s(d.sigma));
+
+  const avgLT = useMemo(() => {
     const s = +ltSum, n = +ltN;
-    return ltSum && ltN && n > 0 ? s / n : null;
+    return s > 0 && n > 0 ? s / n : null;
   }, [ltSum, ltN]);
 
   const otd = useMemo(() => {
     const ok = +okN, tot = +totN;
-    return okN && totN && tot > 0 ? (ok / tot) * 100 : null;
+    return ok >= 0 && tot > 0 ? (ok / tot) * 100 : null;
   }, [okN, totN]);
 
   const cv = useMemo(() => {
     const s = +sigma;
-    return sigma && avg !== null && avg > 0 ? (s / avg) * 100 : null;
-  }, [sigma, avg]);
+    return s >= 0 && avgLT !== null && avgLT > 0 ? (s / avgLT) * 100 : null;
+  }, [sigma, avgLT]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden h-fit">
       <div className="px-4 py-2.5 bg-red-50 border-b border-red-100 flex items-center justify-between">
         <span className="text-sm font-bold text-red-800">납기 KPI</span>
-        <span className="text-xs font-semibold text-red-400 bg-red-100 px-2 py-0.5 rounded-full">① ② ③ 공급위험</span>
+        <span className="text-[11px] font-semibold text-red-400 bg-red-100 px-2 py-0.5 rounded-full">① ② ③ · 공급위험</span>
       </div>
 
       <div className="px-4">
-
-        {/* ① 평균 납기 리드타임 */}
-        <KpiSection num="①" name="평균 납기 리드타임" axis="supply">
-          <p className="text-[10px] text-gray-400">납기이력 테이블 → 각 건의 리드타임(실제입고일−발주일) 합산</p>
-          <Eq>
-            <Num value={ltSum} onChange={setLtSum} placeholder="Σ리드타임" width="w-24" />
+        {/* ① */}
+        <KpiRow
+          num="①" name="평균 납기 리드타임" axis="supply"
+          result={avgLT} unit="일"
+          risk={avgLT === null ? null : avgLT <= 5 ? 'low' : avgLT <= 15 ? 'mid' : 'high'}
+          extra="납기이력 테이블 → 각 건의 리드타임(실제입고일−발주일) 합산"
+          formula={<>
+            <KpiInput value={ltSum} onChange={setLtSum} width="w-20" />
             <Op v="일 ÷" />
-            <Num value={ltN} onChange={setLtN} placeholder="건수" width="w-14" />
+            <KpiInput value={ltN} onChange={setLtN} width="w-14" />
             <Op v="건 =" />
-            {avg !== null
-              ? <><Val v={avg.toFixed(1)} unit="일" /><RiskBadge risk={avg <= 5 ? 'low' : avg <= 15 ? 'mid' : 'high'} axis="supply" /></>
-              : <span className="text-xs text-gray-300">?</span>
-            }
-          </Eq>
-        </KpiSection>
+            {avgLT !== null
+              ? <span className="text-sm font-black text-gray-800">{avgLT.toFixed(1)}일</span>
+              : <span className="text-xs text-gray-300">?</span>}
+          </>}
+        />
 
-        {/* ② 납기준수율 */}
-        <KpiSection num="②" name="납기준수율" axis="supply">
-          <p className="text-[10px] text-gray-400">실제입고일 ≤ 납기예정일인 건 카운트</p>
-          <Eq>
-            <Num value={okN} onChange={setOkN} placeholder="준수" width="w-14" />
+        {/* ② */}
+        <KpiRow
+          num="②" name="납기준수율 (OTD)" axis="supply"
+          result={otd} unit="%"
+          risk={otd === null ? null : otd >= 95 ? 'low' : otd >= 80 ? 'mid' : 'high'}
+          extra="실제입고일 ≤ 납기예정일인 건 카운트"
+          formula={<>
+            <KpiInput value={okN} onChange={setOkN} width="w-14" />
             <Op v="건 ÷" />
-            <Num value={totN} onChange={setTotN} placeholder="전체" width="w-14" />
+            <KpiInput value={totN} onChange={setTotN} width="w-14" />
             <Op v="건 × 100 =" />
             {otd !== null
-              ? <><Val v={otd.toFixed(1)} unit="%" /><RiskBadge risk={otd >= 95 ? 'low' : otd >= 80 ? 'mid' : 'high'} axis="supply" /></>
-              : <span className="text-xs text-gray-300">?</span>
-            }
-          </Eq>
-        </KpiSection>
+              ? <span className="text-sm font-black text-gray-800">{otd.toFixed(1)}%</span>
+              : <span className="text-xs text-gray-300">?</span>}
+          </>}
+        />
 
-        {/* ③ 리드타임 CV */}
-        <KpiSection num="③" name="리드타임 변동계수 (CV)" axis="supply">
-          <p className="text-[10px] text-gray-400">표준편차 σ = √[Σ(리드타임−평균)² ÷ N]</p>
-          <Eq>
-            <Num value={sigma} onChange={setSigma} placeholder="σ" width="w-16" />
+        {/* ③ */}
+        <KpiRow
+          num="③" name="리드타임 변동계수 (CV)" axis="supply"
+          result={cv} unit="%"
+          risk={cv === null ? null : cv < 20 ? 'low' : cv < 40 ? 'mid' : 'high'}
+          extra="σ = √[Σ(리드타임−평균)² ÷ N] · 계산기나 엑셀로 산출 후 입력"
+          formula={<>
+            <Op v="σ =" />
+            <KpiInput value={sigma} onChange={setSigma} width="w-16" />
             <Op v="일 ÷" />
-            {avg !== null
-              ? <span className="text-sm font-bold text-blue-600">{avg.toFixed(1)}<span className="text-xs font-normal text-gray-400 ml-0.5">일①</span></span>
-              : <span className="text-xs text-gray-300">①입력</span>
-            }
+            <span className="text-xs font-bold text-blue-600 whitespace-nowrap">
+              {avgLT !== null ? `${avgLT.toFixed(1)}일①` : '①입력'}
+            </span>
             <Op v="× 100 =" />
             {cv !== null
-              ? <><Val v={cv.toFixed(1)} unit="%" /><RiskBadge risk={cv < 20 ? 'low' : cv < 40 ? 'mid' : 'high'} axis="supply" /></>
-              : <span className="text-xs text-gray-300">?</span>
-            }
-          </Eq>
-        </KpiSection>
+              ? <span className="text-sm font-black text-gray-800">{cv.toFixed(1)}%</span>
+              : <span className="text-xs text-gray-300">?</span>}
+          </>}
+        />
+      </div>
 
+      {/* 참고 지표 */}
+      <div className="mx-4 mt-1 mb-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+        <p className="text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">참고 지표</p>
+        <RefStat label="최대 리드타임" value={`${d.maxLT}일`} />
+        <RefStat label="지연 발생 건수" value={`${d.lateN}건`} sub={`전체 ${d.ltN}건 중`} />
+        <RefStat label="지연 시 평균 초과일" value={d.lateN > 0 ? `${d.avgDelayDays.toFixed(1)}일` : '—'} />
+        <RefStat label="최대 지연일수" value={d.maxDelay > 0 ? `${d.maxDelay}일` : '—'} />
       </div>
     </div>
   );
@@ -154,70 +213,92 @@ export function DeliveryCalcPanel() {
 /* ════════════════════════════════════════
    SupplierCalcPanel  ④⑤⑥
 ════════════════════════════════════════ */
-export function SupplierCalcPanel() {
+export function SupplierCalcPanel({ defaults: d }: { defaults: SupplierDefaults }) {
   // ④ 공급업체 수
-  const [cnt, setCnt] = useState('');
+  const [cnt, setCnt] = useState(fmt(d.supCount, 0));
+
   // ⑤ 1위 집중도
-  const [maxAmt,   setMaxAmt]   = useState('');
-  const [totalAmt, setTotalAmt] = useState('');
+  const [maxA,  setMaxA]  = useState(fmt(d.maxAmt, 0));
+  const [totA,  setTotA]  = useState(fmt(d.totalAmt, 0));
+
   // ⑥ 대체 가능 업체 수
-  const [subCnt, setSubCnt] = useState('');
+  const [sub, setSub] = useState(fmt(d.subCount, 0));
 
   const conc = useMemo(() => {
-    const m = +maxAmt, t = +totalAmt;
-    return maxAmt && totalAmt && t > 0 ? (m / t) * 100 : null;
-  }, [maxAmt, totalAmt]);
+    const m = +maxA, t = +totA;
+    return m >= 0 && t > 0 ? (m / t) * 100 : null;
+  }, [maxA, totA]);
+
+  const subRatioCalc = useMemo(() => {
+    const s = +sub, c = +cnt;
+    return s >= 0 && c > 0 ? (s / c) * 100 : null;
+  }, [sub, cnt]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden h-fit">
       <div className="px-4 py-2.5 bg-red-50 border-b border-red-100 flex items-center justify-between">
         <span className="text-sm font-bold text-red-800">공급업체 KPI</span>
-        <span className="text-xs font-semibold text-red-400 bg-red-100 px-2 py-0.5 rounded-full">④ ⑤ ⑥ 공급위험</span>
+        <span className="text-[11px] font-semibold text-red-400 bg-red-100 px-2 py-0.5 rounded-full">④ ⑤ ⑥ · 공급위험</span>
       </div>
 
       <div className="px-4">
+        {/* ④ */}
+        <KpiRow
+          num="④" name="등록 공급업체 수" axis="supply"
+          result={+cnt || null} unit="개"
+          risk={!cnt ? null : +cnt >= 5 ? 'low' : +cnt >= 3 ? 'mid' : 'high'}
+          extra="공급업체 현황 테이블의 행 수"
+          formula={<>
+            <KpiInput value={cnt} onChange={setCnt} width="w-16" />
+            <Op v="개" />
+          </>}
+        />
 
-        {/* ④ 공급업체 수 */}
-        <KpiSection num="④" name="등록 공급업체 수" axis="supply">
-          <p className="text-[10px] text-gray-400">공급업체 현황 테이블의 행 수</p>
-          <Eq>
-            <Num value={cnt} onChange={setCnt} placeholder="업체 수" width="w-20" />
-            <Op v="개 →" />
-            {cnt && +cnt > 0
-              ? <><Val v={cnt} unit="개" /><RiskBadge risk={+cnt >= 5 ? 'low' : +cnt >= 3 ? 'mid' : 'high'} axis="supply" /></>
-              : <span className="text-xs text-gray-300">?</span>
-            }
-          </Eq>
-        </KpiSection>
-
-        {/* ⑤ 1위 집중도 */}
-        <KpiSection num="⑤" name="1위 공급업체 집중도" axis="supply">
-          <p className="text-[10px] text-gray-400">비중 컬럼 최댓값 ÷ 전체 합계 (또는 비중 컬럼 최댓값 직접 입력)</p>
-          <Eq>
-            <Num value={maxAmt} onChange={setMaxAmt} placeholder="1위 금액" width="w-24" />
+        {/* ⑤ */}
+        <KpiRow
+          num="⑤" name="1위 공급업체 집중도" axis="supply"
+          result={conc} unit="%"
+          risk={conc === null ? null : conc < 30 ? 'low' : conc < 70 ? 'mid' : 'high'}
+          extra="비중 컬럼 최고값; 또는 최대거래금액 ÷ 전체합계 × 100"
+          formula={<>
+            <KpiInput value={maxA} onChange={setMaxA} width="w-24" />
             <Op v="÷" />
-            <Num value={totalAmt} onChange={setTotalAmt} placeholder="전체 합계" width="w-24" />
+            <KpiInput value={totA} onChange={setTotA} width="w-24" />
             <Op v="× 100 =" />
             {conc !== null
-              ? <><Val v={conc.toFixed(1)} unit="%" /><RiskBadge risk={conc < 30 ? 'low' : conc < 70 ? 'mid' : 'high'} axis="supply" /></>
-              : <span className="text-xs text-gray-300">?</span>
-            }
-          </Eq>
-        </KpiSection>
+              ? <span className="text-sm font-black text-gray-800">{conc.toFixed(1)}%</span>
+              : <span className="text-xs text-gray-300">?</span>}
+          </>}
+        />
 
-        {/* ⑥ 대체 가능 업체 수 */}
-        <KpiSection num="⑥" name="대체 가능 업체 수" axis="supply">
-          <p className="text-[10px] text-gray-400">대체 컬럼에서 Y인 행 카운트</p>
-          <Eq>
-            <Num value={subCnt} onChange={setSubCnt} placeholder="Y 업체 수" width="w-20" />
-            <Op v="개 →" />
-            {subCnt && +subCnt >= 0
-              ? <><Val v={subCnt} unit="개" /><RiskBadge risk={+subCnt >= 3 ? 'low' : +subCnt >= 1 ? 'mid' : 'high'} axis="supply" /></>
-              : <span className="text-xs text-gray-300">?</span>
-            }
-          </Eq>
-        </KpiSection>
+        {/* ⑥ */}
+        <KpiRow
+          num="⑥" name="대체 가능 업체 수" axis="supply"
+          result={+sub >= 0 && sub !== '' ? +sub : null} unit="개"
+          risk={sub === '' ? null : +sub >= 3 ? 'low' : +sub >= 1 ? 'mid' : 'high'}
+          extra="대체 컬럼에서 Y인 행 카운트"
+          formula={<>
+            <KpiInput value={sub} onChange={setSub} width="w-16" />
+            <Op v="개" />
+            {subRatioCalc !== null && (
+              <span className="text-[11px] text-gray-400 whitespace-nowrap">
+                (전체의 {subRatioCalc.toFixed(0)}%)
+              </span>
+            )}
+          </>}
+        />
+      </div>
 
+      {/* 참고 지표 */}
+      <div className="mx-4 mt-1 mb-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+        <p className="text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">참고 지표</p>
+        <RefStat label="대체가능 비율" value={`${d.subRatio.toFixed(1)}%`} sub={`${d.subCount}/${d.supCount}개`} />
+        <RefStat label="전체 거래금액 합계" value={`${(d.totalAmt / 10000).toFixed(1)}억원`} />
+        <RefStat
+          label="HHI 지수"
+          value={d.hhi.toFixed(0)}
+          sub={d.hhi >= 2500 ? '고집중' : d.hhi >= 1500 ? '중집중' : '저집중'}
+        />
       </div>
     </div>
   );
@@ -226,49 +307,63 @@ export function SupplierCalcPanel() {
 /* ════════════════════════════════════════
    SpendCalcPanel  ⑦
 ════════════════════════════════════════ */
-export function SpendCalcPanel() {
-  const [itemSpend,  setItemSpend]  = useState('');
-  const [totalSpend, setTotalSpend] = useState('');
+export function SpendCalcPanel({ defaults: d }: { defaults: SpendDefaults }) {
+  const [itemSpend,  setItemSpend]  = useState(n2s(d.itemSpend));
+  const [totalSpend, setTotalSpend] = useState(n2s(d.totalSpend));
 
   const ratio = useMemo(() => {
     const i = +itemSpend, t = +totalSpend;
-    return itemSpend && totalSpend && t > 0 ? (i / t) * 100 : null;
+    return i >= 0 && t > 0 ? (i / t) * 100 : null;
   }, [itemSpend, totalSpend]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden h-fit">
       <div className="px-4 py-2.5 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
         <span className="text-sm font-bold text-emerald-800">지출 KPI</span>
-        <span className="text-xs font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">⑦ 수익영향</span>
+        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">⑦ · 수익영향</span>
       </div>
 
       <div className="px-4">
-        <KpiSection num="⑦" name="구매 지출 비중" axis="profit">
-          <p className="text-[10px] text-gray-400">구매 지출 현황 테이블 → 최근 연도 기준</p>
-          <Eq>
-            <Num value={itemSpend} onChange={setItemSpend} placeholder="품목 금액" width="w-24" />
+        {/* ⑦ */}
+        <KpiRow
+          num="⑦" name="구매 지출 비중" axis="profit"
+          result={ratio} unit="%"
+          risk={ratio === null ? null : ratio < 2 ? 'low' : ratio < 10 ? 'mid' : 'high'}
+          extra="구매 지출 현황 테이블 → 최근 연도 기준"
+          formula={<>
+            <KpiInput value={itemSpend} onChange={setItemSpend} width="w-20" />
             <Op v="억 ÷" />
-            <Num value={totalSpend} onChange={setTotalSpend} placeholder="전사 총액" width="w-24" />
+            <KpiInput value={totalSpend} onChange={setTotalSpend} width="w-20" />
             <Op v="억 × 100 =" />
             {ratio !== null
-              ? <><Val v={ratio.toFixed(2)} unit="%" /><RiskBadge risk={ratio < 2 ? 'low' : ratio < 10 ? 'mid' : 'high'} axis="profit" /></>
-              : <span className="text-xs text-gray-300">?</span>
-            }
-          </Eq>
-          {ratio !== null && (
-            <div className="mt-2">
-              <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${ratio >= 10 ? 'bg-emerald-500' : ratio >= 2 ? 'bg-amber-400' : 'bg-gray-400'}`}
-                  style={{ width: `${Math.min(ratio * 5, 100)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-[9px] text-gray-400 mt-0.5">
-                <span>0%</span><span className="text-amber-500">2%</span><span className="text-emerald-600">10%+</span>
-              </div>
+              ? <span className="text-sm font-black text-gray-800">{ratio.toFixed(2)}%</span>
+              : <span className="text-xs text-gray-300">?</span>}
+          </>}
+        />
+        {ratio !== null && (
+          <div className="pb-3 pl-6">
+            <div className="bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${ratio >= 10 ? 'bg-emerald-500' : ratio >= 2 ? 'bg-amber-400' : 'bg-gray-400'}`}
+                style={{ width: `${Math.min(ratio * 5, 100)}%` }}
+              />
             </div>
-          )}
-        </KpiSection>
+            <div className="flex justify-between text-[9px] text-gray-400 mt-0.5">
+              <span>0%</span><span className="text-amber-500">2%</span><span className="text-emerald-600">10%+</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 참고 지표 */}
+      <div className="mx-4 mt-1 mb-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
+        <p className="text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">참고 지표</p>
+        <RefStat label="최근 연도 절대 지출액" value={`${d.absSpend.toFixed(2)}억원`} />
+        <RefStat
+          label="전년 대비 증가율"
+          value={d.yoyGrowth !== null ? `${d.yoyGrowth > 0 ? '+' : ''}${d.yoyGrowth.toFixed(1)}%` : '—'}
+        />
+        <RefStat label="3년 평균 지출 비중" value={`${d.avgSpendRatio.toFixed(2)}%`} />
       </div>
     </div>
   );
