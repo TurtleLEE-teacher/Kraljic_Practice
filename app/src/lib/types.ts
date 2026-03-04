@@ -12,6 +12,14 @@ export interface QuadrantWeights {
   sv: number;
 }
 
+export interface StrategyOption {
+  id: string;
+  name: string;
+  description: string;
+  benefit: string;
+  risk: string;
+}
+
 export interface QuadrantMeta {
   id: QuadrantId;
   nameKo: string;
@@ -21,6 +29,7 @@ export interface QuadrantMeta {
   coreDilemma: string;
   weights: QuadrantWeights;
   color: string;
+  strategies: StrategyOption[];
 }
 
 // --- Raw Data Types ---
@@ -48,12 +57,18 @@ export interface SpendRecord {
   totalSpend: number; // 전사 총 구매금액 (억원)
 }
 
+export type Difficulty = 'easy' | 'normal' | 'hard' | 'expert';
+
 /** 품목 전체 데이터 */
 export interface ItemData {
   id: string;          // "a" ~ "j"
   label: string;       // 표시 레이블 "품목 A" ~ "품목 J"
   category: string;    // 품목 유형 (예: "전자부품", "원자재")
   description: string; // 품목 간단 설명
+  operationalImpact: number; // 운영 영향도 1~5 (생산라인 정지 시 영향)
+  scenario: string;    // 구매 담당자 시점 상황 설명
+  difficulty: Difficulty;
+  hint: string;        // 분류 힌트
   deliveries: DeliveryRecord[];
   suppliers: SupplierRecord[];
   spends: SpendRecord[];

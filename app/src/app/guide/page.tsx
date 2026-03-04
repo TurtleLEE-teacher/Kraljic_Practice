@@ -62,6 +62,30 @@ const KPI_GUIDE = [
     example: '품목금액 12억원 / 전사총액 150억원\n→ 지출비중 = 12 ÷ 150 × 100 = 8.0%',
     interpretation: '낮을수록(<2%) 수익영향 낮음. 높을수록(≥10%) 수익영향 높음.',
   },
+  {
+    id: 'yoy', num: '⑧', axis: '수익영향', axisColor: 'emerald',
+    name: '연간 지출 증가율 (YoY)',
+    source: '구매 지출 현황 테이블 (최근 2개년)',
+    formula: '증가율(%) = (금년 지출 − 전년 지출) ÷ 전년 지출 × 100',
+    example: '2023년 11.4억 → 2024년 12.0억\n→ (12.0−11.4) ÷ 11.4 × 100 = 5.3%',
+    interpretation: '낮을수록(<3%) 안정적. 높을수록(≥10%) 전략적 중요도 증가 가능.',
+  },
+  {
+    id: 'volatility', num: '⑨', axis: '수익영향', axisColor: 'emerald',
+    name: '가격 변동성',
+    source: '구매 지출 현황 테이블 (3개년 지출비중)',
+    formula: '3개년 지출비중의 CV(%) = σ(지출비중) ÷ 평균(지출비중) × 100',
+    example: '3개년 지출비중: 7.6%, 7.7%, 8.0%\nσ = 0.17, 평균 = 7.77\n→ CV = 0.17 ÷ 7.77 × 100 = 2.2%',
+    interpretation: '낮을수록(<10%) 가격 안정. 높을수록(≥25%) 가격 리스크가 수익에 큰 영향.',
+  },
+  {
+    id: 'opimpact', num: '⑩', axis: '수익영향', axisColor: 'emerald',
+    name: '운영 영향도',
+    source: '품목 상세 페이지 (정성 평가)',
+    formula: '1~5 점수 (1=영향 미미, 5=생산라인 전면 정지)',
+    example: '배터리 셀: 공급 중단 시 전체 조립라인 정지 → 5점\n사무용품: 업무 불편 수준 → 1점',
+    interpretation: '≤2점 = 수익영향 낮음. 3점 = 중간. ≥4점 = 수익영향 높음.',
+  },
 ];
 
 const CLASSIFICATION_TABLE = [
@@ -72,6 +96,9 @@ const CLASSIFICATION_TABLE = [
   { factor: '평균 리드타임',  noncritical: '≤ 5일',        leverage: '≤ 15일',  bottleneck: '≥ 30일', strategic: '≥ 20일'      },
   { factor: '납기준수율',     noncritical: '≥ 95%',        leverage: '≥ 90%',   bottleneck: '< 80%',  strategic: '중간/변동 큼' },
   { factor: '리드타임 CV',    noncritical: '< 20%',        leverage: '< 25%',   bottleneck: '≥ 40%',  strategic: '≥ 30%'       },
+  { factor: '지출 증가율(YoY)', noncritical: '< 3%',       leverage: '≥ 5%',    bottleneck: '< 5%',  strategic: '≥ 10%'       },
+  { factor: '가격 변동성',   noncritical: '< 10%',        leverage: '< 15%',   bottleneck: '변동 큼', strategic: '≥ 25%'       },
+  { factor: '운영 영향도',   noncritical: '≤ 2점',        leverage: '3 ~ 4점', bottleneck: '3 ~ 4점', strategic: '≥ 4점'      },
 ];
 
 /* ─────────────────────────────────────────

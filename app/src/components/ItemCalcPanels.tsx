@@ -18,6 +18,7 @@ export interface SupplierDefaults {
 export interface SpendDefaults {
   itemSpend: number; totalSpend: number; spendRatio: number;
   absSpend: number; yoyGrowth: number | null; avgSpendRatio: number;
+  priceVolatility: number; operationalImpact: number;
 }
 
 /* ─── helpers ─── */
@@ -319,8 +320,8 @@ export function SpendCalcPanel({ defaults: d }: { defaults: SpendDefaults }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden h-fit">
       <div className="px-4 py-2.5 bg-emerald-50 border-b border-emerald-100 flex items-center justify-between">
-        <span className="text-sm font-bold text-emerald-800">지출 KPI</span>
-        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">⑦ · 수익영향</span>
+        <span className="text-sm font-bold text-emerald-800">수익영향 KPI</span>
+        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">⑦ ⑧ ⑨ ⑩ · 수익영향</span>
       </div>
 
       <div className="px-4">
@@ -353,16 +354,50 @@ export function SpendCalcPanel({ defaults: d }: { defaults: SpendDefaults }) {
             </div>
           </div>
         )}
+
+        {/* ⑧ YoY 증가율 */}
+        <KpiRow
+          num="⑧" name="연간 지출 증가율 (YoY)" axis="profit"
+          result={d.yoyGrowth} unit="%"
+          risk={d.yoyGrowth === null ? null : d.yoyGrowth < 3 ? 'low' : d.yoyGrowth < 10 ? 'mid' : 'high'}
+          extra="(금년 지출 − 전년 지출) ÷ 전년 지출 × 100"
+          formula={<>
+            <span className="text-xs text-gray-500">자동 계산</span>
+            {d.yoyGrowth !== null && (
+              <span className="text-sm font-black text-gray-800">{d.yoyGrowth > 0 ? '+' : ''}{d.yoyGrowth.toFixed(1)}%</span>
+            )}
+          </>}
+        />
+
+        {/* ⑨ 가격 변동성 */}
+        <KpiRow
+          num="⑨" name="가격 변동성 (3년 CV)" axis="profit"
+          result={d.priceVolatility} unit="%"
+          risk={d.priceVolatility < 10 ? 'low' : d.priceVolatility < 25 ? 'mid' : 'high'}
+          extra="3개년 지출비중의 표준편차 ÷ 평균 × 100"
+          formula={<>
+            <span className="text-xs text-gray-500">자동 계산</span>
+            <span className="text-sm font-black text-gray-800">{d.priceVolatility.toFixed(1)}%</span>
+          </>}
+        />
+
+        {/* ⑩ 운영 영향도 */}
+        <KpiRow
+          num="⑩" name="운영 영향도" axis="profit"
+          result={d.operationalImpact} unit="점"
+          risk={d.operationalImpact <= 2 ? 'low' : d.operationalImpact === 3 ? 'mid' : 'high'}
+          extra="공급 중단 시 생산라인 영향 (1=미미, 5=전면 정지)"
+          formula={<>
+            <span className="text-xs text-gray-500">정성 평가</span>
+            <span className="text-sm font-black text-gray-800">{d.operationalImpact}점 / 5</span>
+          </>}
+        />
       </div>
 
       {/* 참고 지표 */}
       <div className="mx-4 mt-1 mb-3 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2">
         <p className="text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">참고 지표</p>
         <RefStat label="최근 연도 절대 지출액" value={`${d.absSpend.toFixed(2)}억원`} />
-        <RefStat
-          label="전년 대비 증가율"
-          value={d.yoyGrowth !== null ? `${d.yoyGrowth > 0 ? '+' : ''}${d.yoyGrowth.toFixed(1)}%` : '—'}
-        />
         <RefStat label="3년 평균 지출 비중" value={`${d.avgSpendRatio.toFixed(2)}%`} />
       </div>
     </div>
