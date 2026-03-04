@@ -120,10 +120,19 @@ export default function KpiCalculator() {
   }, [itemSpend, totalSpend]);
 
   /* ── Tabs config ── */
+  /* ── Tab 3 extended: YoY + Volatility ── */
+  const [prevSpend, setPrevSpend] = useState('');
+  const [opImpact, setOpImpact] = useState('3');
+  const yoyCalc = useMemo(() => {
+    const cur = +itemSpend, prev = +prevSpend;
+    if (!itemSpend || !prevSpend || isNaN(cur) || isNaN(prev) || prev <= 0) return null;
+    return ((cur - prev) / prev) * 100;
+  }, [itemSpend, prevSpend]);
+
   const TABS = [
     { id: 'delivery' as Tab, label: '납기이력', kpis: '① ② ③', color: 'red',     desc: '리드타임 · 납기준수율 · CV' },
     { id: 'supplier' as Tab, label: '공급업체', kpis: '④ ⑤ ⑥', color: 'red',     desc: '업체수 · 집중도 · 대체가능' },
-    { id: 'spend'    as Tab, label: '지출비중', kpis: '⑦',       color: 'emerald', desc: '수익영향 축 지표' },
+    { id: 'spend'    as Tab, label: '수익영향', kpis: '⑦ ⑧ ⑨ ⑩', color: 'emerald', desc: '지출비중 · 증가율 · 변동성 · 운영영향도' },
   ];
 
   return (
@@ -281,51 +290,67 @@ export default function KpiCalculator() {
           )}
         </>}
 
-        {/* ════════ TAB 3: SPEND ════════ */}
+        {/* ════════ TAB 3: SPEND + YoY + Volatility + OpImpact ════════ */}
         {tab === 'spend' && <>
           <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
             <p className="text-[11px] font-semibold text-emerald-600 mb-1">입력 방법</p>
             <p className="text-xs text-emerald-700 leading-relaxed">
-              구매 지출 현황 테이블에서 <strong>해당 품목 구매금액</strong>과
-              <strong> 전사 총 구매금액</strong>(억원 단위)을 입력하세요.
-              최근 연도 값을 기준으로 계산하세요.
+              구매 지출 현황 테이블에서 <strong>금년/전년 구매금액</strong>과
+              <strong> 전사 총 구매금액</strong>(억원)을 입력하고,
+              <strong> 운영 영향도</strong>(1~5)를 선택하세요.
             </p>
           </div>
 
           <div className="space-y-3">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                품목 구매금액 <span className="font-normal text-gray-400">(억원)</span>
+                금년 품목 구매금액 <span className="font-normal text-gray-400">(억원)</span>
               </label>
               <div className="relative">
-                <input
-                  type="number"
-                  value={itemSpend}
-                  onChange={e => setItemSpend(e.target.value)}
-                  placeholder="예: 12.0"
-                  min="0"
-                  step="0.1"
-                  className="w-full px-3 py-2.5 pr-14 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-400"
-                />
+                <input type="number" value={itemSpend} onChange={e => setItemSpend(e.target.value)}
+                  placeholder="예: 12.0" min="0" step="0.1"
+                  className="w-full px-3 py-2.5 pr-14 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-400" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-gray-400">억원</span>
               </div>
             </div>
-
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                전년 품목 구매금액 <span className="font-normal text-gray-400">(억원, ⑧ YoY 계산용)</span>
+              </label>
+              <div className="relative">
+                <input type="number" value={prevSpend} onChange={e => setPrevSpend(e.target.value)}
+                  placeholder="예: 11.4" min="0" step="0.1"
+                  className="w-full px-3 py-2.5 pr-14 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-400" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-gray-400">억원</span>
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1.5">
                 전사 총 구매금액 <span className="font-normal text-gray-400">(억원)</span>
               </label>
               <div className="relative">
-                <input
-                  type="number"
-                  value={totalSpend}
-                  onChange={e => setTotalSpend(e.target.value)}
-                  placeholder="예: 150.0"
-                  min="0"
-                  step="0.1"
-                  className="w-full px-3 py-2.5 pr-14 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-400"
-                />
+                <input type="number" value={totalSpend} onChange={e => setTotalSpend(e.target.value)}
+                  placeholder="예: 150.0" min="0" step="0.1"
+                  className="w-full px-3 py-2.5 pr-14 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-emerald-400" />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-gray-400">억원</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1.5">
+                운영 영향도 <span className="font-normal text-gray-400">(1~5, ⑩)</span>
+              </label>
+              <div className="flex gap-1.5">
+                {[1,2,3,4,5].map(n => (
+                  <button key={n} onClick={() => setOpImpact(String(n))}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                      +opImpact === n ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}>
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-between text-[9px] text-gray-400 mt-1 px-1">
+                <span>영향 미미</span><span>생산라인 전면 정지</span>
               </div>
             </div>
           </div>
@@ -341,6 +366,18 @@ export default function KpiCalculator() {
                 num="⑦" label="지출 비중" value={`${spc.ratio.toFixed(2)}%`}
                 risk={spc.ratio < 2 ? 'low' : spc.ratio < 10 ? 'mid' : 'high'} axis="profit"
                 sub={`수익영향(Profit Impact) 축 지표`}
+              />
+              {yoyCalc !== null && (
+                <ResultCard
+                  num="⑧" label="연간 지출 증가율 (YoY)" value={`${yoyCalc > 0 ? '+' : ''}${yoyCalc.toFixed(1)}%`}
+                  risk={yoyCalc < 3 ? 'low' : yoyCalc < 10 ? 'mid' : 'high'} axis="profit"
+                  sub="(금년 − 전년) ÷ 전년 × 100"
+                />
+              )}
+              <ResultCard
+                num="⑩" label="운영 영향도" value={`${opImpact}점`}
+                risk={+opImpact <= 2 ? 'low' : +opImpact === 3 ? 'mid' : 'high'} axis="profit"
+                sub="공급 중단 시 생산라인 영향 (1~5)"
               />
               {/* Visual bar */}
               <div className="bg-gray-100 rounded-full h-2 overflow-hidden">

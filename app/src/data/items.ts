@@ -1,4 +1,4 @@
-import type { ItemData } from '@/lib/types';
+import type { ItemData, QuadrantId } from '@/lib/types';
 
 /**
  * 10개 품목 원천 데이터
@@ -18,6 +18,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 A',
     category: '전자부품',
     description: '전자기기 회로 기판에 범용 사용되는 적층 세라믹 커패시터',
+    operationalImpact: 3,
+    scenario: '양산 라인 5개에서 공통 사용 중이며, 재고 소진 시 2~3일 내 대체 조달이 가능합니다. 올해 원가절감 목표 달성을 위해 협상 전략이 필요합니다.',
+    difficulty: 'normal',
+    hint: '지출비중(8%)이 높고 공급업체가 5개로 다수입니다. 수익영향 HIGH + 공급위험 LOW 조합을 확인하세요.',
     deliveries: [
       { poNumber: 'PO-2024-001', orderDate: '2024-01-05', plannedDate: '2024-01-12', actualDate: '2024-01-11' },
       { poNumber: 'PO-2024-007', orderDate: '2024-01-22', plannedDate: '2024-01-29', actualDate: '2024-01-30' },
@@ -55,6 +59,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 B',
     category: '산업용 소재',
     description: '고온 환경 센서 모듈에 사용되는 특수 고내열 세라믹 절연체',
+    operationalImpact: 4,
+    scenario: '지난 분기 납기 지연으로 생산라인이 이틀간 멈췄습니다. 대체 공급원 조사가 시급하지만, 특수 소성로 요구 사양 때문에 쉽지 않은 상황입니다.',
+    difficulty: 'hard',
+    hint: '지출비중(약 1.9%)은 낮지만, 공급업체가 2개뿐이고 대체 가능 업체가 거의 없습니다. 수익영향 LOW + 공급위험 HIGH 조합입니다.',
     deliveries: [
       { poNumber: 'PO-2024-003', orderDate: '2024-01-08', plannedDate: '2024-02-19', actualDate: '2024-03-05' },
       { poNumber: 'PO-2024-012', orderDate: '2024-02-01', plannedDate: '2024-03-13', actualDate: '2024-03-12' },
@@ -89,6 +97,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 C',
     category: '사무용품',
     description: '복사지, 볼펜, 파일 등 일반 사무 소모품 묶음 단위 구매',
+    operationalImpact: 1,
+    scenario: '매월 정기 발주로 자동 보충되고 있으며, 어느 유통사에서든 당일 배송이 가능합니다. 관리 인력 효율화가 주요 과제입니다.',
+    difficulty: 'easy',
+    hint: '지출비중(0.2%)이 매우 낮고, 공급업체가 10개로 대체가 매우 용이합니다.',
     deliveries: [
       { poNumber: 'PO-2024-004', orderDate: '2024-01-09', plannedDate: '2024-01-11', actualDate: '2024-01-10' },
       { poNumber: 'PO-2024-014', orderDate: '2024-02-05', plannedDate: '2024-02-07', actualDate: '2024-02-07' },
@@ -131,6 +143,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 D',
     category: '2차전지',
     description: '전기차 팩 조립에 사용되는 각형 리튬이온 배터리 셀',
+    operationalImpact: 5,
+    scenario: '주력 전기차 모델 양산이 6개월 후 시작됩니다. 현 공급사가 증설 투자를 요청하고 있으며, 공급 중단 시 전체 조립라인이 정지됩니다.',
+    difficulty: 'expert',
+    hint: '지출비중(35%)이 압도적으로 높고, 공급업체 2개 모두 완전 대체 불가(△)입니다. 양 축 모두 HIGH인지 확인하세요.',
     deliveries: [
       { poNumber: 'PO-2024-002', orderDate: '2024-01-03', plannedDate: '2024-02-02', actualDate: '2024-02-09' },
       { poNumber: 'PO-2024-010', orderDate: '2024-02-05', plannedDate: '2024-03-06', actualDate: '2024-03-06' },
@@ -165,6 +181,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 E',
     category: '철강/금속',
     description: '차체 프레스 공정에 투입되는 열연 고강도 철강 코일 (규격: SS400)',
+    operationalImpact: 4,
+    scenario: '글로벌 철강 시세가 하락세입니다. 복수의 공급사 간 경쟁 입찰을 통해 연간 계약 단가를 재협상할 기회가 왔습니다.',
+    difficulty: 'normal',
+    hint: '지출비중(12%)이 높고, 공급업체 6개 모두 대체 가능(Y)입니다. 수익영향 HIGH + 공급위험 LOW 패턴입니다.',
     deliveries: [
       { poNumber: 'PO-2024-005', orderDate: '2024-01-08', plannedDate: '2024-01-18', actualDate: '2024-01-17' },
       { poNumber: 'PO-2024-016', orderDate: '2024-02-05', plannedDate: '2024-02-15', actualDate: '2024-02-17' },
@@ -203,6 +223,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 F',
     category: '포장재',
     description: '완제품 출하에 사용되는 규격 골판지 박스 및 완충재',
+    operationalImpact: 2,
+    scenario: '출하 일정에 맞춰 안정적으로 공급되고 있으며, 연간 일괄 계약으로 단가를 고정하는 방안을 검토 중입니다.',
+    difficulty: 'easy',
+    hint: '지출비중(0.8%)이 낮고, 공급업체 8개 모두 대체 가능합니다. 전형적인 양축 LOW 패턴입니다.',
     deliveries: [
       { poNumber: 'PO-2024-006', orderDate: '2024-01-10', plannedDate: '2024-01-13', actualDate: '2024-01-13' },
       { poNumber: 'PO-2024-017', orderDate: '2024-02-07', plannedDate: '2024-02-10', actualDate: '2024-02-10' },
@@ -243,6 +267,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 G',
     category: '희소금속/자성재료',
     description: '모터 및 액추에이터에 사용되는 네오디뮴(Nd-Fe-B) 소결 마그넷',
+    operationalImpact: 4,
+    scenario: '최근 중국 수출 규제 강화 뉴스가 보도되었습니다. 구매팀 긴급 회의가 소집되었으며, 안전재고 확보와 대체재 개발이 동시에 논의 중입니다.',
+    difficulty: 'hard',
+    hint: '지출비중(2%)은 경계선이지만 공급업체가 2개뿐이고 모두 중국 소재입니다. 공급위험 지표들을 종합적으로 살펴보세요.',
     deliveries: [
       { poNumber: 'PO-2024-008', orderDate: '2024-01-05', plannedDate: '2024-03-05', actualDate: '2024-04-02' },
       { poNumber: 'PO-2024-018', orderDate: '2024-02-02', plannedDate: '2024-04-02', actualDate: '2024-04-01' },
@@ -277,6 +305,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 H',
     category: 'MRO 소모품',
     description: '생산설비 유지보수에 사용되는 산업용 윤활유 및 그리스',
+    operationalImpact: 2,
+    scenario: '설비 유지보수 주기에 맞춰 소량 정기 구매 중이며, 다수 브랜드 간 호환이 가능합니다. 구매 카드(P-Card) 도입을 검토 중입니다.',
+    difficulty: 'easy',
+    hint: '지출비중(0.33%)이 매우 낮고, 공급업체 7개 모두 대체 가능합니다.',
     deliveries: [
       { poNumber: 'PO-2024-009', orderDate: '2024-01-10', plannedDate: '2024-01-11', actualDate: '2024-01-11' },
       { poNumber: 'PO-2024-020', orderDate: '2024-02-07', plannedDate: '2024-02-08', actualDate: '2024-02-08' },
@@ -316,6 +348,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 I',
     category: '반도체 소재',
     description: 'CMOS 이미지센서 제조용 12인치 실리콘 단결정 웨이퍼 (CZ법)',
+    operationalImpact: 5,
+    scenario: '당사 전용 규격으로 개발된 웨이퍼이며, 양산 검증에 8~12개월이 소요됩니다. 주력 공급사와 장기 파트너십 강화 vs 대체 공급원 개발 사이에서 고민 중입니다.',
+    difficulty: 'expert',
+    hint: '지출비중(18%)이 높고, 실질적 대체 불가 공급사 구조입니다. 양 축이 모두 HIGH인 패턴을 확인하세요.',
     deliveries: [
       { poNumber: 'PO-2024-011', orderDate: '2024-01-02', plannedDate: '2024-04-01', actualDate: '2024-04-28' },
       { poNumber: 'PO-2024-022', orderDate: '2024-02-01', plannedDate: '2024-04-30', actualDate: '2024-04-30' },
@@ -350,6 +386,10 @@ export const ITEMS: ItemData[] = [
     label: '품목 J',
     category: '합성수지/플라스틱',
     description: '가전 및 자동차 내장재 사출 성형에 사용되는 ABS 합성수지 펠렛',
+    operationalImpact: 3,
+    scenario: '국제 유가 하락으로 석유화학 원료 가격이 떨어지고 있습니다. 볼륨 디스카운트와 멀티소싱 전략을 동시에 추진할 타이밍입니다.',
+    difficulty: 'normal',
+    hint: '지출비중(6.5%)이 중상위이고, 공급업체 8개 모두 대체 가능합니다. 수익영향 HIGH + 공급위험 LOW 패턴입니다.',
     deliveries: [
       { poNumber: 'PO-2024-013', orderDate: '2024-01-09', plannedDate: '2024-01-16', actualDate: '2024-01-15' },
       { poNumber: 'PO-2024-025', orderDate: '2024-02-06', plannedDate: '2024-02-13', actualDate: '2024-02-14' },
@@ -385,3 +425,31 @@ export const ITEMS: ItemData[] = [
 export const ITEM_MAP: Record<string, ItemData> = Object.fromEntries(
   ITEMS.map((item) => [item.id, item])
 );
+
+/** 참고 정답 (전략 시뮬레이션 페이지에서 피드백용) */
+export const ITEM_ANSWERS: Record<string, QuadrantId> = {
+  a: 'leverage',
+  b: 'bottleneck',
+  c: 'noncritical',
+  d: 'strategic',
+  e: 'leverage',
+  f: 'noncritical',
+  g: 'bottleneck',
+  h: 'noncritical',
+  i: 'strategic',
+  j: 'leverage',
+};
+
+/** 정답 불일치 시 표시할 피드백 힌트 */
+export const ITEM_FEEDBACK: Record<string, string> = {
+  a: '지출비중 8%로 수익영향 MID~HIGH, 공급업체 5개·모두 대체가능으로 공급위험 LOW → 레버리지',
+  b: '지출비중 1.9%로 수익영향 LOW, 공급업체 2개·대체불가로 공급위험 HIGH → 병목',
+  c: '지출비중 0.2%로 수익영향 LOW, 공급업체 10개·모두 대체가능으로 공급위험 LOW → 일반',
+  d: '지출비중 35%로 수익영향 HIGH, 공급업체 2개·완전대체 불가로 공급위험 HIGH → 전략',
+  e: '지출비중 12%로 수익영향 HIGH, 공급업체 6개·모두 대체가능으로 공급위험 LOW → 레버리지',
+  f: '지출비중 0.8%로 수익영향 LOW, 공급업체 8개·모두 대체가능으로 공급위험 LOW → 일반',
+  g: '지출비중 2%로 수익영향 경계선이지만, 공급업체 2개·중국 집중으로 공급위험 HIGH → 병목',
+  h: '지출비중 0.33%로 수익영향 LOW, 공급업체 7개·모두 대체가능으로 공급위험 LOW → 일반',
+  i: '지출비중 18%로 수익영향 HIGH, 실질 독점 공급구조로 공급위험 HIGH → 전략',
+  j: '지출비중 6.5%로 수익영향 MID~HIGH, 공급업체 8개·모두 대체가능으로 공급위험 LOW → 레버리지',
+};

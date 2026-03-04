@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ITEMS, ITEM_MAP } from '@/data/items';
 import RawDataTable from '@/components/RawDataTable';
 import ItemActions from '@/components/ItemActions';
+import ScoreCard from '@/components/ScoreCard';
 import {
   DeliveryCalcPanel,
   SupplierCalcPanel,
@@ -104,6 +105,12 @@ export default async function ItemDetailPage({ params }: Props) {
     yoyGrowth = ((latestSpend.itemSpend - prev.itemSpend) / prev.itemSpend) * 100;
   }
 
+  // ⑨ 가격 변동성 (3개년 지출비중 CV)
+  const spendRatios = item.spends.map(sp => (sp.itemSpend / sp.totalSpend) * 100);
+  const avgSR = spendRatios.reduce((a, b) => a + b, 0) / spendRatios.length;
+  const sigmaSR = Math.sqrt(spendRatios.reduce((s, r) => s + (r - avgSR) ** 2, 0) / spendRatios.length);
+  const priceVolatility = avgSR > 0 ? (sigmaSR / avgSR) * 100 : 0;
+
   /* ──────────────────────────────────
      Navigation
   ────────────────────────────────── */
@@ -157,6 +164,24 @@ export default async function ItemDetailPage({ params }: Props) {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-5 space-y-6">
+
+        {/* ══ 시나리오 배너 ══ */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex gap-3 items-start">
+          <div className="shrink-0 mt-0.5">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              item.difficulty === 'easy' ? 'bg-emerald-100 text-emerald-700' :
+              item.difficulty === 'normal' ? 'bg-blue-100 text-blue-700' :
+              item.difficulty === 'hard' ? 'bg-orange-100 text-orange-700' :
+              'bg-red-100 text-red-700'
+            }`}>
+              {item.difficulty === 'easy' ? '쉬움' : item.difficulty === 'normal' ? '보통' : item.difficulty === 'hard' ? '어려움' : '심화'}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm text-amber-800 leading-relaxed">{item.scenario}</p>
+            <p className="text-xs text-amber-500 mt-1">{item.description}</p>
+          </div>
+        </div>
 
         {/* ══ 납기 이력  |  납기 KPI ①②③ ══ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -220,8 +245,13 @@ export default async function ItemDetailPage({ params }: Props) {
             absSpend:     latestSpend.itemSpend,
             yoyGrowth,
             avgSpendRatio,
+            priceVolatility,
+            operationalImpact: item.operationalImpact,
           }} />
         </div>
+
+        {/* ══ 종합 스코어카드 ══ */}
+        <ScoreCard item={item} />
 
         {/* ══ 이 품목 분류 ══ */}
         <ItemActions itemId={id} />

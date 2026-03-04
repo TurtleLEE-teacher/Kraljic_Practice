@@ -82,9 +82,19 @@ export default function ItemsPage() {
                   <span className="text-sm font-black text-white uppercase">{item.id}</span>
                 </div>
 
-                {/* Name + category */}
+                {/* Name + category + difficulty */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 whitespace-nowrap">{item.label}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-bold text-gray-900 whitespace-nowrap">{item.label}</p>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                      item.difficulty === 'easy' ? 'bg-emerald-100 text-emerald-700' :
+                      item.difficulty === 'normal' ? 'bg-blue-100 text-blue-700' :
+                      item.difficulty === 'hard' ? 'bg-orange-100 text-orange-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {item.difficulty === 'easy' ? '쉬움' : item.difficulty === 'normal' ? '보통' : item.difficulty === 'hard' ? '어려움' : '심화'}
+                    </span>
+                  </div>
                   <p className="text-xs text-gray-400 whitespace-nowrap">{item.category}</p>
                 </div>
 
